@@ -17,6 +17,7 @@ class FullEphemerisTransition:
         nodes,
         tofs,
         et0_bounds=None,
+        nodes_bounds=None,
         node0_bounds=None,
         nodef_bounds=None,
         tofs_bounds=None,
@@ -31,21 +32,29 @@ class FullEphemerisTransition:
             self.et0_bounds = [et0, et0]
         else:
             self.et0_bounds = et0_bounds
-        # whether to fix node0_bounds
-        if node0_bounds is None:
-            self.node0_bounds = [nodes[0], nodes[0]]  # fix to values at initial nodes
-            self.fixed_node0 = True
+        # whether all nodes' bounds are provided
+        if nodes_bounds is None:
+            # whether to fix node0_bounds
+            if node0_bounds is None:
+                self.node0_bounds = [nodes[0], nodes[0]]  # fix to values at initial nodes
+                self.fixed_node0 = True
+            else:
+                self.node0_bounds = node0_bounds
+                self.fixed_node0 = False
+            # whether to fix nodef_bounds
+            if nodef_bounds is None:
+                self.nodef_bounds = [nodes[-1], nodes[-1]]  # fix to values at final nodes
+                self.fixed_nodef = True
+            else:
+                self.nodef_bounds = nodef_bounds
+                self.fixed_nodef = False
+            # create bounds on all nodes
+            self.nodes_bounds = [] # FIXME
         else:
-            self.node0_bounds = node0_bounds
-            self.fixed_node0 = False
-        # whether to fix nodef_bounds
-        if nodef_bounds is None:
-            self.nodef_bounds = [nodes[-1], nodes[-1]]  # fix to values at final nodes
-            self.fixed_nodef = True
-        else:
-            self.nodef_bounds = nodef_bounds
-            self.fixed_nodef = False
-        # whether to fix tofs
+            self.nodes_bounds = nodes_bounds
+            self.fixed_node0 = nodes_bounds[0][0] == nodes_bounds[0][1]
+            
+        # whether to fix  
         if tofs_bounds is None:
             self.tofs_bounds = [tofs, tofs]   # fix tofs
         else:
@@ -64,10 +73,10 @@ class FullEphemerisTransition:
     
     def get_bounds(self):
         """Construct bounds on the decision variables"""
-        lb = [self.et0_bounds[0]] + list(self.node0_bounds[0])
-        ub = [self.et0_bounds[1]] + list(self.node0_bounds[1])
-        for idx in range(self.N-1):
-            lb += []
+        lb = [self.et0_bounds[0]] #+ list(self.node0_bounds[0])
+        ub = [self.et0_bounds[1]] #+ list(self.node0_bounds[1])
+        for idx in range(self.N+1):
+            lb += [self.nodes_bounds[idx][0]]
             ub += []
         lb += list(self.nodef_bounds[0]) + [self.tofs_bounds[0]]
         ub += list(self.nodef_bounds[1]) + [self.tofs_bounds[1]]
