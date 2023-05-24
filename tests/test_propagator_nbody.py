@@ -39,8 +39,8 @@ if __name__=="__main__":
     )
     # set initial state and propagate
     x0 = np.array([
-        115000.0, 0.0, 0.0,
-        0.0, 0.02, np.sqrt(398600.44/115000.0),
+        85000.0, 0.0, 0.0,
+        0.0, 0.0, np.sqrt(398600.44/85000.0),
     ])
     print(f"x0 = {x0}")
     tof = 10*86400.0

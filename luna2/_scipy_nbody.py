@@ -18,16 +18,13 @@ def third_body_battin(r, s, mu_third):
 def eom_nbody(t,states,params):
     """Equations of motion of N-body problem"""
     # unpack states and params
-    x,y,z,vx,vy,vz = states
     mus, naif_ids, et0, lstar, tstar = params
 
     # initialize derivatives
-    dstates = [
-        vx, vy, vz,
-        -mus[0]*x/((x**2+y**2+z**2)**(3/2)),
-        -mus[0]*y/((x**2+y**2+z**2)**(3/2)),
-        -mus[0]*z/((x**2+y**2+z**2)**(3/2)),
-    ]
+    dstates = np.concatenate((
+        states[3:6],
+        -mus[0]/np.linalg.norm(states[0:3])**3 * states[0:3],
+    ))
 
     # Iterate through extra bodies
     for idx in range(len(mus)-1):
@@ -36,7 +33,7 @@ def eom_nbody(t,states,params):
             "J2000", "NONE", naif_ids[0]
         )
         accel3 = third_body_battin(
-            np.array([x,y,z]), rvec3/lstar, mus[idx+1]
+            states[0:3], rvec3/lstar, mus[idx+1]
         )
         # Add to accelerations
         dstates[3:6] += accel3
