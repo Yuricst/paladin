@@ -75,6 +75,8 @@ if __name__=="__main__":
         t_eval=np.linspace(0,res_cr3bp.t[-1]*tstar,1000)
     )
 
+    # get patch points
+
 
     # plot CR3BP trajectory
     fig = plt.figure(figsize = (6, 6))

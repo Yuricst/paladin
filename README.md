@@ -3,7 +3,7 @@
 Cislunar Astrodynamics in Simplified and Full Ephemeris models
 
 <p align="center">
-  <img src="./assets/Luna_II.png" width="400" title="luna2">
+  <img src="./assets/Luna_II.png" width="250" title="luna2">
 </p>
 
 ## Overview
