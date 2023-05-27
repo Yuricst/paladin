@@ -20,6 +20,7 @@ Optimization is conducted by constructing problems as [`pygmo` udp's](https://es
 
 - `numpy`, `matplotlib`, `numba`, `scipy`, `spiceypy`, `pygmo`
 
+
 ## SPICE setup
 
 Users are responsible for downloading [the generic SPICE kernels froom the NAIF website](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/). In addition, supplementary custom kernels specific to this module are stored in `luna2/assets/spice/`. 
@@ -31,10 +32,23 @@ This package is still in development. For now, please clone the repository and a
 
 ## Capabilities
 
+
+<p align="center">
+  <img src="./plots/propagation_example.png" width="400" title="Propagation example">
+</p>
+
+
+
+#### Roadmap
+
 - [x] Propagation in CR3BP
 - [x] Propagation in N-body problem
 - [ ] Transition to full-ephemeris model
 - [x] Helper methods for frame transformation
+
+
+## Gallery
+
 
 
 ## On Luna II

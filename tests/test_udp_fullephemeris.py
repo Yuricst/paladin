@@ -32,7 +32,7 @@ if __name__=="__main__":
 
     # create CR3BP propagator & propagate over one period
     prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
-    res_cr3bp = prop_cr3bp.solve([0,period], x0_cr3bp, t_eval=np.linspace(0,period,200))
+    res_cr3bp = prop_cr3bp.solve([0,period], x0_cr3bp, t_eval=np.linspace(0,period,1000))
     states_cr3bp_MC = luna2.canonical_to_dimensional(
         luna2.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
         lstar, 
@@ -48,27 +48,41 @@ if __name__=="__main__":
         "EARTHMOONROTATINGMC",
         "J2000"
     )
-
-    # plot figure
-    fig = plt.figure(figsize = (6, 6))
-    ax = plt.axes(projection = '3d')
-    #ax.plot(res.y[0,:], res.y[1,:], res.y[2,:])
-    ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP")
-    ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="J2000")
-    plt.show()
-
-
+    # _states_cr3bp_MC = luna2.apply_frame_transformation(
+    #     epochs,
+    #     states_J2000,
+    #     "J2000",
+    #     "EARTHMOONROTATINGMC"
+    # )
 
     # create N-body propagator
     et0 = spice.utc2et("2025-12-18T12:28:28")
     mus = [
-        398600.44,
         4902.800066,
+        398600.44,
     ]
     prop_nbody = luna2.PropagatorNBody(
         "J2000",
-        ["399", "301"], 
+        ["301", "399"], 
         mus,
         lstar,
         tstar,
     )
+    res_nbody = prop_nbody.solve(
+        et0,
+        [0,res_cr3bp.t[-1]*tstar],
+        states_J2000[:,0],
+        t_eval=np.linspace(0,res_cr3bp.t[-1]*tstar,1000)
+    )
+
+
+    # plot CR3BP trajectory
+    fig = plt.figure(figsize = (6, 6))
+    ax = plt.axes(projection = '3d')
+    ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP (rot-MC)")
+    ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
+    #ax.plot(_states_cr3bp_MC[0,:], _states_cr3bp_MC[1,:], _states_cr3bp_MC[2,:], label="CR3BP")
+    ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J200)")
+    ax.legend()
+    plt.savefig("propagation_example.png", dpi=200)
+    plt.show()

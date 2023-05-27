@@ -1,5 +1,5 @@
 """
-Test for N-body propagator
+Test for full ephemeris transition
 """
 
 import numpy as np
@@ -13,43 +13,70 @@ import luna2
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
+spice.furnsh(os.path.join("..", "assets", "spice", "earth_moon_rotating_mc.tf"))  # custom frame kernel
 
 
 if __name__=="__main__":
-    # list of mus
-    mus = [
-        398600.44,
-        4902.800066,
-    ]
-    naif_ids = ["399", "301"]
+    # seed halo in CR3BP
+    mu_cr3bp = 1.215058560962404E-2
+    lstar = 389703.0
+    tstar = 382981.0
+    vstar = lstar/tstar
+
+    # ID723 in southern halo
+    x0_cr3bp = np.array([
+        1.0134037728554581E+0, 0, -1.7536227281091840E-1,
+        0, -8.3688427472776439E-2, 0
+    ])
+    period = 4 * 1.3960732332950263E+0
+
+    # create CR3BP propagator & propagate over one period
+    prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
+    res_cr3bp = prop_cr3bp.solve([0,period], x0_cr3bp, t_eval=np.linspace(0,period,1000))
+    states_cr3bp_MC = luna2.canonical_to_dimensional(
+        luna2.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
+        lstar, 
+        vstar
+    )
+
+    # transform to propagator's state
     et0 = spice.utc2et("2025-12-18T12:28:28")
-    print(f"et0 = {et0}")
-    lstar = 1.0
-    tstar = 1.0
-    # build ta
-    #ta = build_taylor_nbody(mus, naif_ids, et0)
-    # create propagator
-    prop = luna2.PropagatorNBody(
+    epochs = et0 + res_cr3bp.t*tstar
+    states_J2000 = luna2.apply_frame_transformation(
+        epochs,
+        states_cr3bp_MC,
+        "EARTHMOONROTATINGMC",
+        "J2000"
+    )
+
+    # create N-body propagator
+    et0 = spice.utc2et("2025-12-18T12:28:28")
+    mus = [
+        4902.800066,
+        398600.44,
+    ]
+    prop_nbody = luna2.PropagatorNBody(
         "J2000",
-        naif_ids, 
+        ["301", "399"], 
         mus,
         lstar,
         tstar,
     )
-    # set initial state and propagate
-    x0 = np.array([
-        85000.0, 0.0, 0.0,
-        0.0, 0.0, np.sqrt(398600.44/85000.0),
-    ])
-    print(f"x0 = {x0}")
-    tof = 10*86400.0
-    t_eval = np.linspace(0,tof,600)
-    res = prop.solve(et0, [0,tof], x0, t_eval=t_eval)
+    res_nbody = prop_nbody.solve(
+        et0,
+        [0,res_cr3bp.t[-1]*tstar],
+        states_J2000[:,0],
+        t_eval=np.linspace(0,res_cr3bp.t[-1]*tstar,1000)
+    )
 
-    # plot figure
+
+    # plot CR3BP trajectory
     fig = plt.figure(figsize = (6, 6))
     ax = plt.axes(projection = '3d')
-    #fig, ax = plt.subplots(1,1,figsize=(8,6), p='3d')
-    print(res.y.shape)
-    ax.plot(res.y[0,:], res.y[1,:], res.y[2,:])
+    ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP (rot-MC)")
+    ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
+    #ax.plot(_states_cr3bp_MC[0,:], _states_cr3bp_MC[1,:], _states_cr3bp_MC[2,:], label="CR3BP")
+    ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J200)")
+    ax.legend()
+    plt.savefig("../plots/propagation_example.png", dpi=200)
     plt.show()

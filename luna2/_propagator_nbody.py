@@ -1,5 +1,7 @@
 """
 Propagator for full-ephemeris n-body problem
+For SPICE inertial frames, see:
+https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html#Appendix.%20%60%60Built%20in''%20Inertial%20Reference%20Frames
 """
 
 import numpy as np
@@ -21,9 +23,12 @@ class PropagatorNBody:
         self.naif_frame = naif_frame
         self.naif_ids = naif_ids
         self.mus = mus
-        self.lstar = lstar
-        self.tstar = tstar
-        self.vstar = lstar/tstar
+        if use_canonical:
+            self.lstar = lstar
+            self.tstar = tstar
+            self.vstar = lstar/tstar
+        else:
+            self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
         return
     
     def solve(self, et0, t_span, x0,
