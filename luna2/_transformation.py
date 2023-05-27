@@ -54,3 +54,8 @@ def apply_frame_transformation(epochs, states, frame0, frame1):
     Ts = spice.sxform(frame0, frame1, epochs)  # dimension (N, 6, 6)
     # apply transformation
     return np.einsum('ijk, ki-> ji', Ts, states)
+
+
+def canonical_to_dimensional(states, lstar, vstar):
+    """Convert states in canonical units to states in dimensional units"""
+    return np.concatenate((states[0:3,:]*lstar, states[3:6]*vstar))
