@@ -26,9 +26,15 @@ Users are responsible for downloading [the generic SPICE kernels froom the NAIF 
 
 ## Installation
 
-This package is still in development. You can always pull.
+This package is still in development. For now, please clone the repository and add to path.
+
 
 ## Capabilities
+
+- [x] Propagation in CR3BP
+- [x] Propagation in N-body problem
+- [ ] Transition to full-ephemeris model
+- [x] Helper methods for frame transformation
 
 
 ## On Luna II
