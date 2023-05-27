@@ -24,7 +24,7 @@ class PropagatorCR3BP:
         return
     
     def solve(self, t_span, x0,
-        t_eval=None, rtol=1e-11, atol=1e-11,
+        t_eval=None, rtol=1e-11, atol=1e-11, dense_output=False
     ):
         """Solve IVP with solve_ivp function"""
         if self.get_stm:
@@ -33,5 +33,5 @@ class PropagatorCR3BP:
             eom = eom_cr3bp
         return solve_ivp(
             eom, t_span, x0, args=(self.mu,),
-            t_eval=t_eval, rtol=rtol, atol=atol,
+            t_eval=t_eval, rtol=rtol, atol=atol, dense_output=dense_output,
         )

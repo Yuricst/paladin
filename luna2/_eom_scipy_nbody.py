@@ -4,8 +4,10 @@ Scipy implementation of N-body problem eom
 
 import numpy as np
 import spiceypy as spice
+from numba import njit
 
 
+@njit
 def third_body_battin(r, s, mu_third):
     """Third body perturbation acceleration via Battin's formulation"""
     d = r - s

@@ -32,12 +32,12 @@ class PropagatorNBody:
         return
     
     def solve(self, et0, t_span, x0,
-        t_eval=None, rtol=1e-11, atol=1e-11,
+        t_eval=None, rtol=1e-11, atol=1e-11, dense_output=False
     ):
         """Solve IVP with solve_ivp function"""
         # set parameters
         params = [self.mus, self.naif_ids, et0, self.lstar, self.tstar]
         return solve_ivp(
             eom_nbody, t_span, x0, args=(params,),
-            t_eval=t_eval, rtol=rtol, atol=atol,
+            t_eval=t_eval, rtol=rtol, atol=atol, dense_output=dense_output,
         )

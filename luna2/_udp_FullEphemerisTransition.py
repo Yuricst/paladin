@@ -23,7 +23,13 @@ class FullEphemerisTransition:
         nodef_bounds=None,
         tofs_bounds=None,
     ):
-        """UDP constructor"""
+        """UDP constructor
+        
+        Args:
+            propagator (Propagator): propagator in the dynamics model trajectory is to be constructed
+            et0 (float): initial epoch in seconds past J2000
+            nodes (list): list of patch nodes in the trajectory
+        """
         assert len(nodes) == len(tofs) + 1, "Must provide 1 extra nodes than tofs"
         if nodes_bounds is not None:
             assert len(nodes) == len(nodes_bounds), "nodes and nodes_bounds must be the same length"
@@ -55,6 +61,7 @@ class FullEphemerisTransition:
                 self.fixed_nodef = False
             # create bounds on all nodes
             self.nodes_bounds = self.node0_bounds + [] + self.nodef_bounds  # FIXME
+            raise NotImplementedError("Need to implement automatic nodes_bounds")
         else:
             self.nodes_bounds = nodes_bounds
             self.fixed_node0 = nodes_bounds[0][0] == nodes_bounds[0][1]

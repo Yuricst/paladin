@@ -30,7 +30,7 @@ from ._transformation import (
 # propagation
 #from ._heyoka_nbody import build_taylor_nbody
 from ._eom_scipy_cr3bp import eom_cr3bp
-from ._eom_scipy_nbody import eom_nbody
+from ._eom_scipy_nbody import third_body_battin, eom_nbody
 from ._propagator_cr3bp import PropagatorCR3BP
 from ._propagator_nbody import PropagatorNBody
 

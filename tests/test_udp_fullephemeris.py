@@ -28,18 +28,21 @@ if __name__=="__main__":
         1.0134037728554581E+0, 0, -1.7536227281091840E-1,
         0, -8.3688427472776439E-2, 0
     ])
-    period = 4 * 1.3960732332950263E+0
+    period = 1.3960732332950263E+0
 
     # create CR3BP propagator & propagate over one period
     prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
-    res_cr3bp = prop_cr3bp.solve([0,period], x0_cr3bp, t_eval=np.linspace(0,period,1000))
+    t_eval = [0, period/2, period]
+    res_cr3bp = prop_cr3bp.solve(
+        [0,period], x0_cr3bp, t_eval=t_eval, dense_output=True
+    )
     states_cr3bp_MC = luna2.canonical_to_dimensional(
         luna2.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
         lstar, 
         vstar
     )
 
-    # transform to propagator's state
+    # transform to propagator's frame
     et0 = spice.utc2et("2025-12-18T12:28:28")
     epochs = et0 + res_cr3bp.t*tstar
     states_J2000 = luna2.apply_frame_transformation(
@@ -48,12 +51,6 @@ if __name__=="__main__":
         "EARTHMOONROTATINGMC",
         "J2000"
     )
-    # _states_cr3bp_MC = luna2.apply_frame_transformation(
-    #     epochs,
-    #     states_J2000,
-    #     "J2000",
-    #     "EARTHMOONROTATINGMC"
-    # )
 
     # create N-body propagator
     et0 = spice.utc2et("2025-12-18T12:28:28")
@@ -75,16 +72,31 @@ if __name__=="__main__":
         t_eval=np.linspace(0,res_cr3bp.t[-1]*tstar,1000)
     )
 
-    # get patch points
+    # Construct nodes for two revolutions
+    print(f"states_J2000 = {states_J2000}")
+    state_half_period = states_J2000[:,1]
+    nodes = [
+        states_J2000[:,0],
+        states_J2000[:,1],
+        states_J2000[:,0],
+        states_J2000[:,1],
+        states_J2000[:,0],
+    ]
+    tofs = [period/2 for _ in range(len(nodes)-1)]
 
+    # create UDP for full-ephemeris transition
+    udp = luna2.UDPFullEphemeris(
+        prop_nbody,
+        et0,
+        nodes,
+        tofs,
+    )
 
-    # plot CR3BP trajectory
-    fig = plt.figure(figsize = (6, 6))
-    ax = plt.axes(projection = '3d')
-    ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP (rot-MC)")
-    ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
-    #ax.plot(_states_cr3bp_MC[0,:], _states_cr3bp_MC[1,:], _states_cr3bp_MC[2,:], label="CR3BP")
-    ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J200)")
-    ax.legend()
-    plt.savefig("propagation_example.png", dpi=200)
-    plt.show()
+    # # plot CR3BP trajectory
+    # fig = plt.figure(figsize = (6, 6))
+    # ax = plt.axes(projection = '3d')
+    # ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP (rot-MC)")
+    # ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
+    # ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J200)")
+    # ax.legend()
+    # plt.show()
