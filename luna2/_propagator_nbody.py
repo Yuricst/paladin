@@ -4,7 +4,7 @@ Propagator for full-ephemeris n-body problem
 
 import numpy as np
 from scipy.integrate import solve_ivp
-from ._scipy_nbody import eom_nbody
+from ._eom_scipy_nbody import eom_nbody
 
 class PropagatorNBody:
     """Class for N-body propagator"""

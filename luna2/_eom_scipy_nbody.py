@@ -1,5 +1,5 @@
 """
-Scipy implementation of N-body problem
+Scipy implementation of N-body problem eom
 """
 
 import numpy as np
