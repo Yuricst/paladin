@@ -59,3 +59,8 @@ def apply_frame_transformation(epochs, states, frame0, frame1):
 def canonical_to_dimensional(states, lstar, vstar):
     """Convert states in canonical units to states in dimensional units"""
     return np.concatenate((states[0:3,:]*lstar, states[3:6]*vstar))
+
+
+def dimensional_to_canonical(states, lstar, vstar):
+    """Convert states in dimensional units to states in canonical units"""
+    return np.concatenate((states[0:3,:]/lstar, states[3:6]/vstar))

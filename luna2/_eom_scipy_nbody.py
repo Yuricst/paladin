@@ -31,7 +31,7 @@ def eom_nbody(t,states,params):
     # Iterate through extra bodies
     for idx in range(len(mus)-1):
         rvec3, _ = spice.spkpos(
-            naif_ids[idx+1], et0 + t/tstar, 
+            naif_ids[idx+1], et0 + t*tstar, 
             "J2000", "NONE", naif_ids[0]
         )
         accel3 = third_body_battin(

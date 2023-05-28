@@ -6,6 +6,8 @@ import numpy as np
 import spiceypy as spice
 import matplotlib.pyplot as plt
 import os
+import pygmo as pg
+import pygmo_plugins_nonfree as ppnf
 
 import sys 
 sys.path.append("../")
@@ -28,11 +30,11 @@ if __name__=="__main__":
         1.0134037728554581E+0, 0, -1.7536227281091840E-1,
         0, -8.3688427472776439E-2, 0
     ])
-    period = 1.3960732332950263E+0
+    period = 2*1.3960732332950263E+0
 
     # create CR3BP propagator & propagate over one period
     prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
-    t_eval = [0, period/2, period]
+    t_eval = np.linspace(0,period,500)   #[0, period/2, period]
     res_cr3bp = prop_cr3bp.solve(
         [0,period], x0_cr3bp, t_eval=t_eval, dense_output=True
     )
@@ -51,12 +53,14 @@ if __name__=="__main__":
         "EARTHMOONROTATINGMC",
         "J2000"
     )
+    states_J2000 = luna2.dimensional_to_canonical(states_J2000, lstar, vstar)
 
     # create N-body propagator
+    print("Creating N-body integrator...")
     et0 = spice.utc2et("2025-12-18T12:28:28")
     mus = [
-        4902.800066,
-        398600.44,
+        mu_cr3bp,    #4902.800066,
+        1-mu_cr3bp,  #398600.44,
     ]
     prop_nbody = luna2.PropagatorNBody(
         "J2000",
@@ -64,12 +68,13 @@ if __name__=="__main__":
         mus,
         lstar,
         tstar,
+        use_canonical=True,
     )
     res_nbody = prop_nbody.solve(
         et0,
-        [0,res_cr3bp.t[-1]*tstar],
+        [0,res_cr3bp.t[-1]],
         states_J2000[:,0],
-        t_eval=np.linspace(0,res_cr3bp.t[-1]*tstar,1000)
+        t_eval=np.linspace(0,res_cr3bp.t[-1],1000)
     )
 
     # Construct nodes for two revolutions
@@ -84,19 +89,48 @@ if __name__=="__main__":
     ]
     tofs = [period/2 for _ in range(len(nodes)-1)]
 
+    # create bounds on nodes
+    nodes_bounds = [
+        [states_J2000[:,0], states_J2000[:,0]],
+        luna2.get_node_bounds_relative(states_J2000[:,1], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        luna2.get_node_bounds_relative(states_J2000[:,0], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        luna2.get_node_bounds_relative(states_J2000[:,1], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        luna2.get_node_bounds_relative(states_J2000[:,0], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+    ]
+
     # create UDP for full-ephemeris transition
-    udp = luna2.UDPFullEphemeris(
+    udp = luna2.FullEphemerisTransition(
         prop_nbody,
         et0,
         nodes,
         tofs,
+        et0_bounds=None,
+        nodes_bounds=nodes_bounds,
     )
+    print(udp.get_bounds())
 
-    # # plot CR3BP trajectory
-    # fig = plt.figure(figsize = (6, 6))
-    # ax = plt.axes(projection = '3d')
-    # ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP (rot-MC)")
-    # ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
-    # ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J200)")
-    # ax.legend()
-    # plt.show()
+    # solve with SNOPT
+    print("Creating algorithm...")
+    uda = ppnf.snopt7(library=os.getenv("SPICE_SO"), minor_version=7)
+    uda.set_integer_option("Major iterations limit", 1)
+    uda.set_numeric_option("Major optimality tolerance", 1e-2)
+    uda.set_numeric_option("Major feasibility tolerance", 1e-4)
+    uda.set_numeric_option('Major feasibility tolerance', 1e-6)
+    uda.set_numeric_option('Minor feasibility tolerance', 1e-6)
+    algo = pg.algorithm(uda)
+    prob = pg.problem(udp)
+    pop = pg.population(prob, 1)
+
+    print("Solving...")
+    pop = algo.evolve(pop)
+    print(pop)
+
+    # plot CR3BP trajectory
+    fig = plt.figure(figsize = (6, 6))
+    ax = plt.axes(projection = '3d')
+    ax.plot(states_cr3bp_MC[0,:]/lstar, states_cr3bp_MC[1,:]/lstar, states_cr3bp_MC[2,:]/lstar,
+        label="CR3BP (rot-MC)")
+    ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
+    ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J2000)")
+    ax.legend()
+    plt.show()

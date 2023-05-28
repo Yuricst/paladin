@@ -24,7 +24,11 @@ from ._transformation import (
     shift_origin_x,
     shift_barycenter_to_m2,
     apply_frame_transformation,
-    canonical_to_dimensional
+    canonical_to_dimensional,
+    dimensional_to_canonical,
+)
+from ._nodes_helper import (
+    get_node_bounds_relative,
 )
 
 # propagation

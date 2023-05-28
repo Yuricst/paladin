@@ -28,7 +28,7 @@ if __name__=="__main__":
         1.0134037728554581E+0, 0, -1.7536227281091840E-1,
         0, -8.3688427472776439E-2, 0
     ])
-    period = 4 * 1.3960732332950263E+0
+    period = 2 * 1.3960732332950263E+0
 
     # create CR3BP propagator & propagate over one period
     prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
@@ -69,6 +69,28 @@ if __name__=="__main__":
         t_eval=np.linspace(0,res_cr3bp.t[-1]*tstar,1000)
     )
 
+    # create N-body propagator in canonical mode
+    mus_canonical = [
+        1.0,
+        398600.44/4902.800066,
+    ]
+    lstar_nbody = 3000.0
+    vstar_nbody = np.sqrt(4902.800066/lstar_nbody)
+    tstar_nbody = lstar_nbody/vstar_nbody
+    prop_nbody_canonical = luna2.PropagatorNBody(
+        "J2000",
+        ["301", "399"],
+        mus_canonical,
+        lstar_nbody,
+        tstar_nbody,
+        use_canonical=True,
+    )
+    res_nbody_canonical = prop_nbody_canonical.solve(
+        et0,
+        [0,res_nbody.t[-1]/tstar_nbody],
+        luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
+        t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
+    )
 
     # plot CR3BP trajectory
     fig = plt.figure(figsize = (6, 6))
@@ -76,7 +98,14 @@ if __name__=="__main__":
     ax.plot(states_cr3bp_MC[0,:], states_cr3bp_MC[1,:], states_cr3bp_MC[2,:], label="CR3BP (rot-MC)")
     ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
     #ax.plot(_states_cr3bp_MC[0,:], _states_cr3bp_MC[1,:], _states_cr3bp_MC[2,:], label="CR3BP")
-    ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J200)")
+    ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J2000)")
+
+
+    ax.plot(res_nbody_canonical.y[0,:]*lstar_nbody,
+            res_nbody_canonical.y[1,:]*lstar_nbody,
+            res_nbody_canonical.y[2,:]*lstar_nbody,
+        label="N-body (J200 - canonical)")
+    
     ax.legend()
     plt.savefig("../plots/propagation_example.png", dpi=200)
     plt.show()

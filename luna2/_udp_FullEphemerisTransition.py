@@ -92,14 +92,15 @@ class FullEphemerisTransition:
         lb = [self.et0_bounds[0]] #+ list(self.node0_bounds[0])
         ub = [self.et0_bounds[1]] #+ list(self.node0_bounds[1])
         for idx in range(self.N):
-            lb += [self.nodes_bounds[idx][0]]
-            ub += [self.nodes_bounds[idx][1]]
+            lb += list(self.nodes_bounds[idx][0])
+            ub += list(self.nodes_bounds[idx][1])
         for idx in range(self.N-1):
             lb += [self.tofs_bounds[idx][0]]
             ub += [self.tofs_bounds[idx][1]]
         return (lb, ub)
     
     def fitness(self, x):
+        """Compute fitness of decision variables"""
         # unpack decision variables
         et0, nodes, tofs = x[0], x[1:6*self.N+1], x[6*self.N+1:]
         et_nodes = [et0] + [et0 + tof for tof in tofs]
