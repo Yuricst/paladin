@@ -87,7 +87,7 @@ if __name__=="__main__":
         states_J2000[:,1],
         states_J2000[:,0],
     ]
-    tofs = [period/2 for _ in range(len(nodes)-1)]
+    tofs = [period/2 + idx for idx in range(len(nodes)-1)]
 
     # create bounds on nodes
     nodes_bounds = [
@@ -107,11 +107,13 @@ if __name__=="__main__":
         et0_bounds=None,
         nodes_bounds=nodes_bounds,
     )
-    print(udp.get_bounds())
+    lb,ub = udp.get_bounds()
+    print(len(lb), len(ub))
 
     # solve with SNOPT
     print("Creating algorithm...")
-    uda = ppnf.snopt7(library=os.getenv("SPICE_SO"), minor_version=7)
+    snopt_lib = "/home/yuri/Applications/SNOPT/libsnopt7/libsnopt7_cpp.so"
+    uda = ppnf.snopt7(library=os.getenv("SNOPT_SO"), minor_version=7)
     uda.set_integer_option("Major iterations limit", 1)
     uda.set_numeric_option("Major optimality tolerance", 1e-2)
     uda.set_numeric_option("Major feasibility tolerance", 1e-4)

@@ -102,14 +102,24 @@ class FullEphemerisTransition:
     def fitness(self, x):
         """Compute fitness of decision variables"""
         # unpack decision variables
-        et0, nodes, tofs = x[0], x[1:6*self.N+1], x[6*self.N+1:]
+        et0, tofs = x[0], x[6*self.N+1:]
+        _nodes = x[1:6*self.N+1]
+
+        nodes = []
+        for i in range(self.N):
+            nodes.append(_nodes[i * 6: (i + 1) * 6])
+
+        # list of epochs
         et_nodes = [et0] + [et0 + tof for tof in tofs]
+
         # propagate first node forward only
         sol_fwd_list = [self.propagator.solve(et_nodes[0], (0,tofs[0]/2), nodes[0]),]
         sol_bck_list = []
 
+        print(f"self.N = {self.N}, len(tofs) = {len(tofs)}")
+
         # propagate intermediate nodes forward and backward
-        for idx in range(self.N-1):
+        for idx in range(self.N-2):
             sol_bck_list.append(
                 self.propagator.solve(et_nodes[idx+1], (0,-tofs[idx]/2), nodes[idx+1])
             )
@@ -119,13 +129,16 @@ class FullEphemerisTransition:
 
         # propagate final node backward only
         sol_bck_list.append(
-            self.propagator.solve(et_nodes[self.N-1], (0,-tofs[self.N-1]/2), nodes[self.N-1])
+            self.propagator.solve(et_nodes[self.N-1], (0,-tofs[self.N-2]/2), nodes[self.N-1])
         )
 
         # compute residuals for each interval
+        ceqs = []
+        for idx in range(self.N-1):
+            ceqs += list(sol_bck_list[idx].y[:,-1] - sol_fwd_list[idx].y[:,-1])
         
         # in order: objective, equality constraints, inequality constraints
-        return #[1.0, ceqs, cineqs]
+        return [1.0,] + ceqs
 
     def gradient(self, x):
         return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
