@@ -3,7 +3,7 @@ Init file in module
 """
 
 # Let users know if they're missing any of our hard dependencies
-_hard_dependencies = ("numpy", "matplotlib", "numba", "scipy", "spiceypy", "pygmo")
+_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy", "pygmo")
 _missing_dependencies = []
 
 for _dependency in _hard_dependencies:
@@ -40,3 +40,6 @@ from ._propagator_nbody import PropagatorNBody
 
 # model transition
 from ._udp_FullEphemerisTransition import FullEphemerisTransition
+
+# algorithms for pygmo
+from ._algo_factory import algo_gradient

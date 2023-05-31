@@ -1,0 +1,13 @@
+name: luna2
+
+dependencies:
+  - python=3.11
+  - pygmo_plugins_nonfree
+  - pygmo
+  - heyoka.py
+  - pykep
+  - jupyter
+  - scipy
+  - numpy
+  - matplotlib
+  - spiceypy

@@ -99,7 +99,7 @@ class FullEphemerisTransition:
             ub += [self.tofs_bounds[idx][1]]
         return (lb, ub)
     
-    def fitness(self, x):
+    def fitness(self, x, get_sols=False):
         """Compute fitness of decision variables"""
         # unpack decision variables
         et0, tofs = x[0], x[6*self.N+1:]
@@ -110,13 +110,14 @@ class FullEphemerisTransition:
             nodes.append(_nodes[i * 6: (i + 1) * 6])
 
         # list of epochs
-        et_nodes = [et0] + [et0 + tof for tof in tofs]
+        if self.propagator.use_canonical:
+            et_nodes = [et0] + [et0 + sum(tofs[:i+1])*self.propagator.tstar for i in range(len(tofs))]
+        else:
+            et_nodes = [et0] + [et0 + sum(tofs[:i+1]) for i in range(len(tofs))]
 
         # propagate first node forward only
         sol_fwd_list = [self.propagator.solve(et_nodes[0], (0,tofs[0]/2), nodes[0]),]
         sol_bck_list = []
-
-        print(f"self.N = {self.N}, len(tofs) = {len(tofs)}")
 
         # propagate intermediate nodes forward and backward
         for idx in range(self.N-2):
@@ -138,7 +139,10 @@ class FullEphemerisTransition:
             ceqs += list(sol_bck_list[idx].y[:,-1] - sol_fwd_list[idx].y[:,-1])
         
         # in order: objective, equality constraints, inequality constraints
-        return [1.0,] + ceqs
+        if get_sols is False:
+            return [1.0,] + ceqs
+        else:
+            return [1.0,] + ceqs, sol_fwd_list, sol_bck_list
 
     def gradient(self, x):
         return pg.estimate_gradient_h(lambda x: self.fitness(x), x)

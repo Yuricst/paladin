@@ -23,6 +23,7 @@ class PropagatorNBody:
         self.naif_frame = naif_frame
         self.naif_ids = naif_ids
         self.mus = mus
+        self.use_canonical = use_canonical
         if use_canonical:
             self.lstar = lstar
             self.tstar = tstar
