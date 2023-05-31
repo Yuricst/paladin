@@ -91,13 +91,13 @@ if __name__=="__main__":
     ]
     tofs = [period/2 + idx for idx in range(len(nodes)-1)]
     tofs_bounds = [
-        [tof*0.95, tof*1.05] for tof in tofs
+        [tof*0.85, tof*1.15] for tof in tofs
     ]
 
     # create bounds on et0 and nodes
     et0_bounds = [et0 - 1000, et0 + 1000]
     nodes_bounds = [
-        [states_J2000[:,0], states_J2000[:,0]],
+        luna2.get_node_bounds_relative(states_J2000[:,0], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
         luna2.get_node_bounds_relative(states_J2000[:,1], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
         #luna2.get_node_bounds_relative(states_J2000[:,2], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
         #luna2.get_node_bounds_relative(states_J2000[:,3], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
@@ -120,38 +120,23 @@ if __name__=="__main__":
     # test fitness function evaluation
     print("Testing fitness function evaluation...")
     xtest = (np.array(ub) + np.array(lb))/2
-    fvec, sol_fwd_list, sol_bck_list = udp.fitness(xtest, True)
-    print(f"fvec = {fvec}")
+    fvec, _, _ = udp.fitness(xtest, True)
+    #print(f"fvec = {fvec}")
 
     # test gradient evaluation
     print("Testing gradient evaluation...")
     grad = udp.gradient(xtest)
-
-
-    # plot CR3BP trajectory
-    #print("Plotting initial guess...")
-    #colors = cm.rainbow(np.linspace(0, 1, len(sol_fwd_list)))
-    #fig = plt.figure(figsize = (6, 6))
-    #ax = plt.axes(projection = '3d')
-    #ax.plot(states_J2000[0,:], states_J2000[1,:], states_J2000[2,:], label="CR3BP (J2000)")
-    #ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label="N-body (J2000)")
-
-    # # plot initial arcs
-    # for idx,sol in enumerate(sol_fwd_list):
-    #     ax.scatter(sol.y[0,0], sol.y[1,0], sol.y[2,0], label="Fwd segments", c=colors[idx], marker="o")
-    #     ax.plot(sol.y[0,:], sol.y[1,:], sol.y[2,:], label="Fwd segments", c=colors[idx])
-    # for idx,sol in enumerate(sol_bck_list):
-    #     ax.scatter(sol.y[0,0], sol.y[1,0], sol.y[2,0], label="Fwd segments", c=colors[idx], marker="s")
-    #     ax.plot(sol.y[0,:], sol.y[1,:], sol.y[2,:], label="Bck segments", c=colors[idx])
-    # #ax.legend()
-
+    print(f"grad = {np.shape(grad)}")
+    print(f"len(x) = {len(xtest)}")
+    print(f"len(f) = {len(fvec)}")
 
     # solve with NLP solver
     print("Creating algorithm...")
     algo = luna2.algo_gradient(
         name="ipopt", 
         #snopt7_path=os.getenv("SNOPT_SO"),
-        #max_iter=5, ctol=1e-5
+        max_iter=0,
+        ctol=1e-4
     )
     
     algo.set_verbosity(1)
@@ -165,8 +150,10 @@ if __name__=="__main__":
 
     # get optimal solution
     xopt = pop.champion_x
-    fvec, sol_fwd_list, sol_bck_list = udp.fitness(xopt, True)
+    fvec, sol_fwd_list, sol_bck_list = udp.fitness(xopt, get_sols=True, verbose=True)
     print("fvec = ", fvec)
+    print(f"udp.N = {udp.N}")
+    print(f"unpack_x(self, x) = {udp.unpack_x(xopt)}")
 
     # plot optimized arcs
     colors = cm.rainbow(np.linspace(0, 1, len(sol_fwd_list)))
@@ -180,7 +167,11 @@ if __name__=="__main__":
         ax.scatter(sol.y[0,0], sol.y[1,0], sol.y[2,0], label="Fwd segments", color=colors[idx], marker="s")
         ax.scatter(sol.y[0,-1], sol.y[1,-1], sol.y[2,-1], label="Fwd segments", color=colors[idx], marker="v")
         ax.plot(sol.y[0,:], sol.y[1,:], sol.y[2,:], label="Bck segments", color=colors[idx])
-  
+    
+    state_offset = sol_bck_list[0].y[:,-1] - sol_fwd_list[0].y[:,-1]
+    print(f"state_offset = {state_offset}")
+    print(f"len(sol_fwd_list) = {len(sol_fwd_list)}")
+    print(f"len(sol_bck_list) = {len(sol_bck_list)}")
 
     # display plots
     plt.show()

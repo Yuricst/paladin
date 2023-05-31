@@ -99,8 +99,8 @@ class FullEphemerisTransition:
             ub += [self.tofs_bounds[idx][1]]
         return (lb, ub)
     
-    def fitness(self, x, get_sols=False):
-        """Compute fitness of decision variables"""
+    def unpack_x(self, x):
+        """Unpack decision vector into `et_nodes`, `tofs`, `nodes`"""
         # unpack decision variables
         et0, tofs = x[0], x[6*self.N+1:]
         _nodes = x[1:6*self.N+1]
@@ -114,6 +114,12 @@ class FullEphemerisTransition:
             et_nodes = [et0] + [et0 + sum(tofs[:i+1])*self.propagator.tstar for i in range(len(tofs))]
         else:
             et_nodes = [et0] + [et0 + sum(tofs[:i+1]) for i in range(len(tofs))]
+        return et_nodes, tofs, nodes
+    
+    def fitness(self, x, get_sols=False, verbose=False):
+        """Compute fitness of decision variables"""
+        # unpack decision variables
+        et_nodes, tofs, nodes = self.unpack_x(x)
 
         # propagate first node forward only
         sol_fwd_list = [self.propagator.solve(et_nodes[0], (0,tofs[0]/2), nodes[0]),]
@@ -121,6 +127,8 @@ class FullEphemerisTransition:
 
         # propagate intermediate nodes forward and backward
         for idx in range(self.N-2):
+            if verbose:
+                print(f"Integrating segment {idx}")
             sol_bck_list.append(
                 self.propagator.solve(et_nodes[idx+1], (0,-tofs[idx]/2), nodes[idx+1])
             )
@@ -137,12 +145,21 @@ class FullEphemerisTransition:
         ceqs = []
         for idx in range(self.N-1):
             ceqs += list(sol_bck_list[idx].y[:,-1] - sol_fwd_list[idx].y[:,-1])
+            if verbose:
+                print(f"Appending inequality {idx}: {list(sol_bck_list[idx].y[:,-1] - sol_fwd_list[idx].y[:,-1])}")
         
         # in order: objective, equality constraints, inequality constraints
         if get_sols is False:
             return [1.0,] + ceqs
         else:
             return [1.0,] + ceqs, sol_fwd_list, sol_bck_list
+        
+    def gradient_custom(self, x):
+        """Custom gradient computation"""
+        # unpack decision variables
+        et_nodes, tofs, nodes = self.unpack_x(x)
+        return
 
     def gradient(self, x):
+        """Compute gradient of decision variables"""
         return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
