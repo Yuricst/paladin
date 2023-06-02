@@ -17,7 +17,7 @@ class FullEphemerisTransition:
         et0,
         nodes,
         tofs,
-        et0_bounds=None,
+        delta_et0_bounds=None,
         nodes_bounds=None,
         node0_bounds=None,
         nodef_bounds=None,
@@ -37,11 +37,12 @@ class FullEphemerisTransition:
         self.nodes = nodes
         self.N = len(nodes)
 
-        # whether to fix et0 
-        if et0_bounds is None:
-            self.et0_bounds = [et0, et0]
+        # whether to fix et0
+        self.et0_ref = et0  # reference epoch
+        if delta_et0_bounds is None:
+            self.delta_et0_bounds = [0.0, 0.0]
         else:
-            self.et0_bounds = et0_bounds
+            self.delta_et0_bounds = delta_et0_bounds
 
         # whether all nodes' bounds are provided
         if nodes_bounds is None:
@@ -89,8 +90,8 @@ class FullEphemerisTransition:
     
     def get_bounds(self):
         """Construct bounds on the decision variables"""
-        lb = [self.et0_bounds[0]] #+ list(self.node0_bounds[0])
-        ub = [self.et0_bounds[1]] #+ list(self.node0_bounds[1])
+        lb = [self.delta_et0_bounds[0]] #+ list(self.node0_bounds[0])
+        ub = [self.delta_et0_bounds[1]] #+ list(self.node0_bounds[1])
         for idx in range(self.N):
             lb += list(self.nodes_bounds[idx][0])
             ub += list(self.nodes_bounds[idx][1])
@@ -102,13 +103,14 @@ class FullEphemerisTransition:
     def unpack_x(self, x):
         """Unpack decision vector into `et_nodes`, `tofs`, `nodes`"""
         # unpack decision variables
-        et0, tofs = x[0], x[6*self.N+1:]
+        delta_et0, tofs = x[0], x[6*self.N+1:]
         _nodes = x[1:6*self.N+1]
+        et0 = self.et0_ref + delta_et0*self.propagator.tstar
 
         nodes = []
         for i in range(self.N):
             nodes.append(_nodes[i * 6: (i + 1) * 6])
-
+    
         # list of epochs
         if self.propagator.use_canonical:
             et_nodes = [et0] + [et0 + sum(tofs[:i+1])*self.propagator.tstar for i in range(len(tofs))]
@@ -160,6 +162,20 @@ class FullEphemerisTransition:
         et_nodes, tofs, nodes = self.unpack_x(x)
         return
 
-    def gradient(self, x):
-        """Compute gradient of decision variables"""
-        return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
+    def gradient(self, x, dx=1e-8, use_h=False):
+        """Compute gradient of decision variables
+        Ref:
+        * https://esa.github.io/pygmo2/gh_utils.html#pygmo.estimate_gradient
+        
+        Args:
+            x (list): decision variables
+            dx (float): step size for finite difference
+            use_h (bool): whether to use higher order finite difference
+
+        Returns:
+            list: gradient of decision variables
+        """
+        if use_h:
+            return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
+        else:
+            return pg.estimate_gradient(lambda x: self.fitness(x), x, dx=dx)

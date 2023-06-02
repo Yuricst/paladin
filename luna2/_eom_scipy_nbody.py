@@ -20,7 +20,7 @@ def third_body_battin(r, s, mu_third):
 def eom_nbody(t,states,params):
     """Equations of motion of N-body problem"""
     # unpack states and params
-    mus, naif_ids, et0, lstar, tstar = params
+    mus, naif_ids, et0, lstar, tstar, naif_frame = params
 
     # initialize derivatives
     dstates = np.concatenate((
@@ -32,7 +32,7 @@ def eom_nbody(t,states,params):
     for idx in range(len(mus)-1):
         rvec3, _ = spice.spkpos(
             naif_ids[idx+1], et0 + t*tstar, 
-            "J2000", "NONE", naif_ids[0]
+            naif_frame, "NONE", naif_ids[0]
         )
         accel3 = third_body_battin(
             states[0:3], rvec3/lstar, mus[idx+1]

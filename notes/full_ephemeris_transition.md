@@ -64,13 +64,18 @@ $$
     \end{bmatrix}
     \\[3.0em]
     C &= \begin{bmatrix}
-        \dfrac{\partial \boldsymbol{x}_1(-\Delta t_0/2)}{\partial t} & - \dfrac{\partial \boldsymbol{x}_0(\Delta t_0/2)}{\partial t} & & & 
+        -\dfrac{1}{2}\dot{x}_1(-\Delta t_0/2) - \dfrac{1}{2}\dot{x}_0( \Delta t_0/2)
+        & & & 
         \\[1.0em]
-         & \dfrac{\partial \boldsymbol{x}_2(\Delta t_1/2)}{\partial t} & - \dfrac{\partial \boldsymbol{x}_1(-\Delta t_1/2)}{\partial t} & &
+         & 
+         -\dfrac{1}{2}\dot{x}_2(-\Delta t_2/2) - \dfrac{1}{2}\dot{x}_1(\Delta t_1/2)
+          & &
         \\[1.0em]
-        & & \ddots & \ddots & 
+        & & \ddots  & 
         \\[1.0em]
-         & & & \dfrac{\partial \boldsymbol{x}_N(\Delta t_{N-1}/2)}{\partial t} & - \dfrac{\partial \boldsymbol{x}_{N-1}(-\Delta t_{N-1}/2)}{\partial t}
+         & & &
+         -\dfrac{1}{2}\dot{x}_N(-\Delta t_{N-1}/2) - \dfrac{1}{2}\dot{x}_{N-1}(\Delta t_{N-1}/2)
+         % \dfrac{\partial \boldsymbol{x}_N(\Delta t_{N-1}/2)}{\partial t} - \dfrac{\partial \boldsymbol{x}_{N-1}(-\Delta t_{N-1}/2)}{\partial t}
     \end{bmatrix}
 \end{aligned}
 $$

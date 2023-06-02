@@ -34,15 +34,20 @@ class PropagatorNBody:
         return
     
     def solve(self, et0, t_span, x0,
-        t_eval=None, rtol=1e-11, atol=1e-11, dense_output=False
+        t_eval=None, method="RK45", rtol=1e-11, atol=1e-11, dense_output=False
     ):
         """Solve IVP with solve_ivp function"""
         # set parameters
-        params = [self.mus, self.naif_ids, et0, self.lstar, self.tstar]
+        params = [self.mus, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
         return solve_ivp(
             eom_nbody, t_span, x0, args=(params,),
-            t_eval=t_eval, rtol=rtol, atol=atol, dense_output=dense_output,
+            t_eval=t_eval, method=method, rtol=rtol, atol=atol, dense_output=dense_output,
         )
+    
+    def eom(self, et0, t, x):
+        """Evaluate equations of motion"""
+        params = [self.mus, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
+        return eom_nbody(t, x, params)
     
     def get_stm_cdm(self, et0, tf, x0, h=1e-6, get_svf=False):
         """Get STM from et0 to tf using x0 as initial state
@@ -65,7 +70,7 @@ class PropagatorNBody:
             sol_fwd = self.solve(et0, [0,tf], x0_ptrb_fwd)
             # backward perturbed propagation
             x0_ptrb_bck = copy.deepcopy(x0)
-            x0_ptrb_bck[idx] += h
+            x0_ptrb_bck[idx] -= h
             sol_bck = self.solve(et0, [0,tf], x0_ptrb_bck)
             # store column
             stm[:,idx] = (sol_fwd.y[:,-1] - sol_bck.y[:,-1])/(2*h)
@@ -74,5 +79,5 @@ class PropagatorNBody:
             return stm
         else:
             sol = self.solve(et0, [0,tf], x0)
-            return sol.y[:,-1], stm
+            return sol.y[:,-1], stm, sol
     
