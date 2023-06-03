@@ -33,8 +33,7 @@ if __name__=="__main__":
         "J2000",
         naif_ids, 
         mus,
-        lstar,
-        tstar,
+        lstar=10000.0,
     )
     # set initial state and propagate
     x0 = np.array([

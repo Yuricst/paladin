@@ -4,10 +4,14 @@ For SPICE inertial frames, see:
 https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html#Appendix.%20%60%60Built%20in''%20Inertial%20Reference%20Frames
 """
 
-import numpy as np
 import copy
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+
 from ._eom_scipy_nbody import eom_nbody
+from ._plotter import set_equal_axis
+
 
 class PropagatorNBody:
     """Class for N-body propagator"""
@@ -16,8 +20,7 @@ class PropagatorNBody:
         naif_frame,
         naif_ids,
         mus,
-        lstar,
-        tstar,
+        lstar=3000.0,
         use_canonical=False,
     ):
         """Initialize propagator"""
@@ -26,19 +29,38 @@ class PropagatorNBody:
         self.mus = mus
         self.use_canonical = use_canonical
         if use_canonical:
+            self.mus_use = np.array(self.mus) / mus[0]
             self.lstar = lstar
-            self.tstar = tstar
-            self.vstar = lstar/tstar
+            self.vstar = np.sqrt(mus[0]/self.lstar)
+            self.tstar = lstar/self.vstar
         else:
+            self.mus_use = self.mus
             self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
         return
     
+    def summary(self):
+        """Print info about integrator"""
+        print(f" ******* N-body propagator summary ******* ")
+        print(f" |   NAIF frame      : {self.naif_frame}")
+        print(f" |   NAIF IDs        : {self.naif_ids}")
+        print(f" |   GMs             : {self.mus}")
+        print(f" |   Canonical units : {self.use_canonical}")
+        print(f" |   lstar           : {self.lstar}")
+        print(f" |   tstar           : {self.tstar}")
+        print(f" |   vstar           : {self.vstar}")
+        print(f" ---------------------------------------- ")
+        return
+    
+    def dim2nondim(self, state):
+        assert len(state) == 6, "state should be length 6"
+        return np.concatenate((state[0:3]/self.lstar, state[3:6]/self.vstar))
+
     def solve(self, et0, t_span, x0,
         t_eval=None, method="RK45", rtol=1e-11, atol=1e-11, dense_output=False
     ):
         """Solve IVP with solve_ivp function"""
         # set parameters
-        params = [self.mus, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
+        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
         return solve_ivp(
             eom_nbody, t_span, x0, args=(params,),
             t_eval=t_eval, method=method, rtol=rtol, atol=atol, dense_output=dense_output,
@@ -46,7 +68,7 @@ class PropagatorNBody:
     
     def eom(self, et0, t, x):
         """Evaluate equations of motion"""
-        params = [self.mus, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
+        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
         return eom_nbody(t, x, params)
     
     def get_stm_cdm(self, et0, tf, x0, h=1e-6, get_svf=False):
@@ -80,4 +102,31 @@ class PropagatorNBody:
         else:
             sol = self.solve(et0, [0,tf], x0)
             return sol.y[:,-1], stm, sol
+        
+    def plot3(self, sol, ax=None, color="deeppink", linewidth=0.7, scale_equal_axis=1.05):
+        """Plot 3D trajectory of propagated solution"""
+        if ax is None:
+            new_plot = True
+            fig = plt.figure(figsize = (8,8))
+            ax = plt.axes(projection = '3d')
+        else:
+            new_plot = False
+        ax.plot(
+            sol.y[0,:]*self.lstar,
+            sol.y[1,:]*self.lstar,
+            sol.y[2,:]*self.lstar,
+            color=color,
+            linewidth=linewidth,
+        )
+        set_equal_axis(
+            sol.y[0,:]*self.lstar,
+            sol.y[1,:]*self.lstar,
+            sol.y[2,:]*self.lstar,
+            scale=scale_equal_axis,
+        )
+        # return figure
+        if new_plot:
+            return fig, ax
+        else:
+            return ax
     

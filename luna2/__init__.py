@@ -30,6 +30,9 @@ from ._transformation import (
 from ._nodes_helper import (
     get_node_bounds_relative,
 )
+from ._plotter import (
+    set_equal_axis
+)
 
 # propagation
 #from ._heyoka_nbody import build_taylor_nbody

@@ -17,6 +17,7 @@ spice.furnsh(os.path.join("..", "assets", "spice", "earth_moon_rotating_mc.tf"))
 
 
 if __name__=="__main__":
+    print("Testing cr3bp propagator...")
     # seed halo in CR3BP
     mu_cr3bp = 1.215058560962404E-2
     lstar = 389703.0
@@ -51,18 +52,21 @@ if __name__=="__main__":
     )
 
     # create N-body propagator
+    print("Testing nbody propagator (dimensional)...")
     et0 = spice.utc2et("2025-12-18T12:28:28")
+    naif_ids = ["301", "399", "10"]
     mus = [
-        4902.800066,
-        398600.44,
+        4902.800118457549,
+        398600.435507226,
+        132712440018.0,
     ]
     prop_nbody = luna2.PropagatorNBody(
         naif_frame,
-        ["301", "399"], 
+        naif_ids, 
         mus,
-        lstar,
-        tstar,
+        use_canonical=False,
     )
+    prop_nbody.summary()
     res_nbody = prop_nbody.solve(
         et0,
         [0,res_cr3bp.t[-1]*tstar],
@@ -71,26 +75,26 @@ if __name__=="__main__":
     )
 
     # create N-body propagator in canonical mode
-    mus_canonical = [
-        1.0,
-        398600.44/4902.800066,
-    ]
+    print("Testing nbody propagator (canonical)...")
     lstar_nbody = 3000.0
     vstar_nbody = np.sqrt(4902.800066/lstar_nbody)
     tstar_nbody = lstar_nbody/vstar_nbody
     prop_nbody_canonical = luna2.PropagatorNBody(
         naif_frame,
-        ["301", "399"],
-        mus_canonical,
-        lstar_nbody,
-        tstar_nbody,
+        naif_ids,
+        mus,
+        lstar=lstar_nbody,
         use_canonical=True,
     )
+    prop_nbody_canonical.summary()
     res_nbody_canonical = prop_nbody_canonical.solve(
         et0,
         [0,res_nbody.t[-1]/tstar_nbody],
         luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
         t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
+    )
+    print("state0: ",
+        luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0]
     )
 
     # plot CR3BP trajectory
