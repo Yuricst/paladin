@@ -103,6 +103,12 @@ class FullEphemerisTransition:
             ub += [self.tofs_bounds[idx][1]]
         return (lb, ub)
     
+    def get_x0(self):
+        """Get initial guess"""
+        lb, ub = self.get_bounds()
+        x0 = (np.array(lb)+np.array(ub))/2
+        return x0
+    
     def unpack_x(self, x):
         """Unpack decision vector into `et_nodes`, `tofs`, `nodes`"""
         # unpack decision variables
