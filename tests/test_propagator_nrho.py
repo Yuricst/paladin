@@ -17,6 +17,7 @@ matplotlib.rcParams.update({'font.size': 14})
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
+spice.furnsh(os.path.join(os.getenv("SPICE"), "pck", "gm_de440.tpc"))
 
 spice.furnsh(os.path.join("..", "assets", "spice", "earth_moon_rotating_mc.tf"))  # custom frame kernel
 spice.furnsh(os.path.join(
@@ -26,6 +27,8 @@ spice.furnsh(os.path.join(
     "receding_horiz_3189_1burnApo_DiffCorr_15yr.bsp"
 ))  # baseline NRHO
 
+print(spice.bodvrd("EARTH", "GM", 1)[1][0])
+          
 
 if __name__=="__main__":
     # set epochs
@@ -50,11 +53,7 @@ if __name__=="__main__":
 
     # create NRHO propagator
     naif_ids = ["301", "399", "10"]
-    mus = [
-        4902.800118457549,
-        398600.435507226,
-        132712440018.0,
-    ]
+    mus = [spice.bodvrd(ID, "GM", 1)[1][0] for ID in naif_ids]
     prop_nbody = luna2.PropagatorNBody(
         naif_frame,
         naif_ids,
