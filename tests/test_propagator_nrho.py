@@ -5,12 +5,15 @@ Baseline from: https://naif.jpl.nasa.gov/pub/naif/misc/MORE_PROJECTS/DSG/
 
 import numpy as np
 import spiceypy as spice
+import matplotlib
 import matplotlib.pyplot as plt
 import os
 
 import sys 
 sys.path.append("../")
 import luna2
+
+matplotlib.rcParams.update({'font.size': 14})
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
@@ -28,7 +31,7 @@ if __name__=="__main__":
     # set epochs
     et0 = spice.utc2et("2025-01-01T08:09:36")
     tf = 60 * 86400.0  # seconds
-    ets = np.linspace(et0, et0 + tf, 2000)
+    ets = np.linspace(et0, et0 + tf, 3000)
     naif_frame = "ECLIPJ2000"
 
     # extract states from SPICE
@@ -54,7 +57,7 @@ if __name__=="__main__":
     ]
     prop_nbody = luna2.PropagatorNBody(
         naif_frame,
-        naif_ids, 
+        naif_ids,
         mus,
         lstar = 3000.0,
         use_canonical=True,
@@ -77,15 +80,16 @@ if __name__=="__main__":
             res_nbody.y[1,:]*prop_nbody.lstar,
             res_nbody.y[2,:]*prop_nbody.lstar,
         color="red", label="Propagated", linewidth=0.5)
-    ax.set(xlabel="x", ylabel="y", zlabel="z")
+    ax.set(xlabel="x, km", ylabel="y, km", zlabel="z, km")
     ax.legend()
+    plt.savefig("../plots/propagation_example_nrho.png", dpi=200)
 
     # error plot
     error_pos = res_nbody.y[0:3,:]*prop_nbody.lstar - np.transpose(sv_baseline[:,0:3])
     fig1, axs1 = plt.subplots(3,1, figsize=(9,5))
     for idx in range(3):
         axs1[idx].plot(ets, error_pos[idx,:])
-        axs1[1].grid(True, alpha=0.5)
+        axs1[idx].grid(True, alpha=0.5)
     axs1[0].set(xlabel="Epoch", ylabel="x error, km")
     axs1[1].set(xlabel="Epoch", ylabel="y error, km")
     axs1[2].set(xlabel="Epoch", ylabel="z error, km")

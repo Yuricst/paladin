@@ -4,12 +4,15 @@ Test for full ephemeris transition
 
 import numpy as np
 import spiceypy as spice
+import matplotlib
 import matplotlib.pyplot as plt
 import os
 
 import sys 
 sys.path.append("../")
 import luna2
+
+matplotlib.rcParams.update({'font.size': 14})
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))

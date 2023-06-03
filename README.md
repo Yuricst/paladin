@@ -34,7 +34,7 @@ This package is still in development. For now, please clone the repository and a
 
 
 <p align="center">
-  <img src="./plots/propagation_example.png" width="400" title="Propagation example">
+  <img src="./plots/propagation_example_nrho.png" width="400" title="Propagation example">
 </p>
 
 
