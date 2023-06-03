@@ -7,6 +7,7 @@ import pygmo as pg
 from scipy.linalg import block_diag
 import copy
 
+from ._newtonraphson import _newtonraphson_iteration, _leastsquare_iteration, _minimumnorm_iteration
 
 class FullEphemerisTransition:
     """UDP as problem to transition to full ephemeris model
@@ -123,7 +124,7 @@ class FullEphemerisTransition:
             et_nodes = [et0] + [et0 + sum(tofs[:i+1]) for i in range(len(tofs))]
         return et_nodes, tofs, nodes
     
-    def fitness(self, x, get_sols=False, verbose=False):
+    def fitness(self, x, get_sols=False, verbose=False, get_objective=True):
         """Compute fitness of decision variables"""
         # unpack decision variables
         et_nodes, tofs, nodes = self.unpack_x(x)
@@ -155,11 +156,17 @@ class FullEphemerisTransition:
             if verbose:
                 print(f"Appending inequality {idx}: {list(sol_bck_list[idx].y[:,-1] - sol_fwd_list[idx].y[:,-1])}")
         
+        # formulate fitness list
+        if get_objective:
+            fitness_list = [1.0,] + ceqs
+        else:
+            fitness_list = ceqs
+
         # in order: objective, equality constraints, inequality constraints
         if get_sols is False:
-            return [1.0,] + ceqs
+            return fitness_list
         else:
-            return [1.0,] + ceqs, sol_fwd_list, sol_bck_list
+            return fitness_list, sol_fwd_list, sol_bck_list
         
     def gradient_custom(self, x, dx=1e-6, return_list=True):
         """Custom gradient computation
@@ -251,3 +258,35 @@ class FullEphemerisTransition:
             return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
         else:
             return pg.estimate_gradient(lambda x: self.fitness(x), x, dx=dx)
+    
+
+    def multiple_shooting(self, x0, max_iter=1, ftol=1e-5, dx=1e-6, verbose=True):
+        """Multiple shooting method for gradient computation"""
+        # initialize
+        x_iter = copy.copy(x0)
+        xs_list, fs_list = [], []
+        convergence_flag = False
+
+        for idx in range(max_iter):
+            # compute fitness
+            f_iter = np.array(self.fitness(x_iter, get_objective=False))
+
+            # storage
+            xs_list.append(x_iter)
+            fs_list.append(f_iter)
+
+            if np.linalg.norm(f_iter[1:]) <= ftol:
+                print(f"Met convergence criteria at iteration {idx} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e}")
+                convergence_flag = True
+                break
+
+            if verbose:
+                print(f"Iteration {idx+1} / {max_iter} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e}")
+
+            # compute gradient
+            grad_custom = self.gradient_custom(x_iter, dx=dx, return_list=False)
+            DF = grad_custom[1:,:]
+
+            # update
+            x_iter = _minimumnorm_iteration(x_iter, f_iter, DF)
+        return xs_list, fs_list, convergence_flag

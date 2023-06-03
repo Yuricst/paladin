@@ -33,6 +33,12 @@ from ._nodes_helper import (
 from ._plotter import (
     set_equal_axis
 )
+from ._newtonraphson import (
+    _newtonraphson_iteration,
+    _leastsquare_iteration,
+    _minimumnorm_iteration,
+)
+
 
 # propagation
 #from ._heyoka_nbody import build_taylor_nbody
