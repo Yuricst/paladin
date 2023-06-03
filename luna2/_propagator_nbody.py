@@ -48,7 +48,7 @@ class PropagatorNBody:
         print(f" |   lstar           : {self.lstar}")
         print(f" |   tstar           : {self.tstar}")
         print(f" |   vstar           : {self.vstar}")
-        print(f" ---------------------------------------- ")
+        print(f" ----------------------------------------- ")
         return
     
     def dim2nondim(self, state):
