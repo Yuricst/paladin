@@ -4,6 +4,8 @@ UDP for transitioning to full ephemeris model
 
 import numpy as np
 import pygmo as pg
+from scipy.linalg import block_diag
+import copy
 
 
 class FullEphemerisTransition:
@@ -105,7 +107,10 @@ class FullEphemerisTransition:
         # unpack decision variables
         delta_et0, tofs = x[0], x[6*self.N+1:]
         _nodes = x[1:6*self.N+1]
-        et0 = self.et0_ref + delta_et0*self.propagator.tstar
+        if self.propagator.use_canonical:
+            et0 = self.et0_ref + delta_et0*self.propagator.tstar
+        else:
+            et0 = self.et0_ref + delta_et0
 
         nodes = []
         for i in range(self.N):
@@ -156,13 +161,80 @@ class FullEphemerisTransition:
         else:
             return [1.0,] + ceqs, sol_fwd_list, sol_bck_list
         
-    def gradient_custom(self, x):
-        """Custom gradient computation"""
+    def gradient_custom(self, x, dx=1e-6, return_list=True):
+        """Custom gradient computation
+        
+        Args:
+            x (list): decision variables
+            dx (float): step size for finite difference
+            return_list (bool): whether to return a list or a numpy array
+
+        Returns:
+            (list): gradient of the objective function
+        """
+        # number of constraints and decision variables
+        nX = len(x)
+        nF = 1 + self.get_nec() + self.get_nic()
+
         # unpack decision variables
         et_nodes, tofs, nodes = self.unpack_x(x)
-        return
+        
+        # compute sensitivity w.r.t. nodes via stms
+        Bs_diag, Bs_upperdiag = [], []
 
-    def gradient(self, x, dx=1e-8, use_h=False):
+        # for-loop: for each leg
+        n_legs = len(tofs)
+        for idx in range(n_legs):
+            idx_fwd_seg = idx
+            idx_back_seg = idx + 1
+            
+            # forward segment
+            svf0, stm0, _ = self.propagator.get_stm_cdm(et_nodes[idx_fwd_seg], tofs[idx]/2, nodes[idx_fwd_seg], get_svf=True)
+            
+            # backward segment
+            svf1, stm1, _ = self.propagator.get_stm_cdm(et_nodes[idx_back_seg], -tofs[idx]/2, nodes[idx_back_seg], get_svf=True)
+            
+            # construct elements of Jacobian via STM
+            Bs_diag.append(-stm0)
+            Bs_upperdiag.append(stm1)
+
+        # concatenate
+        B_diag = np.concatenate((block_diag(*Bs_diag), np.zeros((6*n_legs,6))), axis=1)
+        B_offdiag = np.concatenate((np.zeros((6*n_legs,6)), block_diag(*Bs_upperdiag)), axis=1)
+        B = B_diag + B_offdiag
+        B = np.concatenate((np.zeros((1,nX-1-len(tofs))),B))
+
+        # compute sensitivity w.r.t. et0 & tofs via central differencing
+        # w.r.t. et0
+        xtest_ptrb_fwd = copy.copy(x)
+        xtest_ptrb_fwd[0] += dx
+
+        xtest_ptrb_bck = copy.copy(x)
+        xtest_ptrb_bck[0] -= dx
+
+        A = (np.array(self.fitness(xtest_ptrb_fwd)) - np.array(self.fitness(xtest_ptrb_bck)))/(2*dx)
+        A = A.reshape(-1,1)
+
+        # w.r.t. TOF
+        C = np.zeros((nF,len(tofs)))
+        for idx in range(len(tofs)):
+            xtest_ptrb_fwd = copy.copy(x)
+            xtest_ptrb_fwd[1+6*len(nodes)+idx] += dx
+
+            xtest_ptrb_bck = copy.copy(x)
+            xtest_ptrb_bck[1+6*len(nodes)+idx] -= dx
+            
+            C[:,idx] = (np.array(self.fitness(xtest_ptrb_fwd)) - np.array(self.fitness(xtest_ptrb_bck)))/(2*dx)
+        
+        # concatenate A, B, C
+        grad_custom = np.concatenate((A,B,C), axis=1)
+        if return_list:
+            return list(grad_custom.reshape(np.size(grad_custom),))
+        else:
+            return grad_custom
+        
+
+    def gradient(self, x, dx=1e-6, use_h=False):
         """Compute gradient of decision variables
         Ref:
         * https://esa.github.io/pygmo2/gh_utils.html#pygmo.estimate_gradient

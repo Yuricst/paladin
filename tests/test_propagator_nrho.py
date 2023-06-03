@@ -27,8 +27,6 @@ spice.furnsh(os.path.join(
     "receding_horiz_3189_1burnApo_DiffCorr_15yr.bsp"
 ))  # baseline NRHO
 
-print(spice.bodvrd("EARTH", "GM", 1)[1][0])
-          
 
 if __name__=="__main__":
     # set epochs

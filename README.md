@@ -18,12 +18,17 @@ Optimization is conducted by constructing problems as [`pygmo` udp's](https://es
 
 ## Dependencies
 
-- `numpy`, `matplotlib`, `numba`, `scipy`, `spiceypy`, `pygmo`
+- `numpy`, `matplotlib`, `numba`, `scipy`, `spiceypy`, `pygmo`, `pygmo_plugins_nonfree`
 
 
 ## SPICE setup
 
-Users are responsible for downloading [the generic SPICE kernels froom the NAIF website](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/). In addition, supplementary custom kernels specific to this module are stored in `luna2/assets/spice/`. 
+Users are responsible for downloading [the generic SPICE kernels froom the NAIF website](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/). In addition, supplementary custom kernels specific to this module are stored in `luna2/assets/spice/`. The most commonly required kernels are:
+
+- `naif0012.tls`
+- `de440.bsp`
+- `gm_de440.tpc` 
+
 
 ## Installation
 
@@ -31,13 +36,6 @@ This package is still in development. For now, please clone the repository and a
 
 
 ## Capabilities
-
-
-<p align="center">
-  <img src="./plots/propagation_example_nrho.png" width="400" title="Propagation example">
-</p>
-
-
 
 #### Roadmap
 
@@ -48,6 +46,12 @@ This package is still in development. For now, please clone the repository and a
 
 
 ## Gallery
+
+NRHO propagation
+
+<p align="center">
+  <img src="./plots/propagation_example_nrho.png" width="400" title="Propagation example">
+</p>
 
 
 
@@ -65,4 +69,6 @@ This package is still in development. For now, please clone the repository and a
 
 一年戦争時はその地勢が最大に活かされ、緒戦で各サイドの駐留部隊が壊滅した後もジオンの大規模攻勢を受けないまま連邦軍唯一の宇宙拠点として機能した。また、ガンダリウム合金の素材となる希少金属の最大鉱床でもあり、資源衛星としての価値も高い。
 </blockquote>
+
+[ルナツー（Luna 2）](https://gundam.wiki.cre.jp/wiki/%E3%83%AB%E3%83%8A%E3%83%84%E3%83%BC)
 

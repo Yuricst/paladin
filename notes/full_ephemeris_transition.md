@@ -54,13 +54,13 @@ $$
     \end{bmatrix}
     \\[3.0em]
     B &= \begin{bmatrix}
-        \Phi_1 & -\Phi_0 & & & 
+        -\Phi_0 & \Phi_1 & & & 
         \\
-         & \Phi_2 & -\Phi_1 & &
+         & -\Phi_1 & \Phi_2 & &
         \\
         & & \ddots & \ddots & 
         \\
-         & & & \Phi_N & -\Phi_{N-1}
+         & & & -\Phi_{N-1} & \Phi_{N}
     \end{bmatrix}
     \\[3.0em]
     C &= \begin{bmatrix}

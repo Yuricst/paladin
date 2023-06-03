@@ -23,7 +23,17 @@ class PropagatorNBody:
         lstar=3000.0,
         use_canonical=False,
     ):
-        """Initialize propagator"""
+        """Initialize propagator.
+        The spacecraft's N-body problem is formulated with `naif_ids[0]` as the primary body.
+        If `use_canonical = True`, `mus` are scaled such that the `mu` of the primary body is 1.
+        
+        Args:
+            naif_frame (str): SPICE frame name
+            naif_ids (list): SPICE NAIF IDs of gravitational bodies to account for
+            mus (list): GMs of gravitational bodies to account for, in km^3/s^2
+            lstar (float): length scale for canonical units, in km
+            use_canonical (bool): whether to use canonical units
+        """
         self.naif_frame = naif_frame
         self.naif_ids = naif_ids
         self.mus = mus
@@ -55,10 +65,25 @@ class PropagatorNBody:
         assert len(state) == 6, "state should be length 6"
         return np.concatenate((state[0:3]/self.lstar, state[3:6]/self.vstar))
 
-    def solve(self, et0, t_span, x0,
+    def solve(
+        self, et0, t_span, x0,
         t_eval=None, method="RK45", rtol=1e-11, atol=1e-11, dense_output=False
     ):
-        """Solve IVP with solve_ivp function"""
+        """Solve IVP with solve_ivp function
+        
+        Args:
+            et0 (float): initial epoch, in ephemeris seconds
+            t_span (list): initial and final integration time
+            x0 (np.array): initial state
+            t_eval (np.array): times at which to store solution
+            method (str): integration method
+            rtol (float): relative tolerance
+            atol (float): absolute tolerance
+            dense_output (bool): whether to return dense output
+        
+        Returns:
+            (bunch object): returned object from `scipy.integrate.solve_ivp`
+        """
         # set parameters
         params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
         return solve_ivp(
