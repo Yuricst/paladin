@@ -5,6 +5,7 @@ UDP for transitioning to full ephemeris model
 import numpy as np
 import pygmo as pg
 from scipy.linalg import block_diag
+import time
 import copy
 
 from ._newtonraphson import _newtonraphson_iteration, _leastsquare_iteration, _minimumnorm_iteration
@@ -25,6 +26,7 @@ class FullEphemerisTransition:
         node0_bounds=None,
         nodef_bounds=None,
         tofs_bounds=None,
+        economic_gradient=True
     ):
         """UDP constructor
         
@@ -77,9 +79,19 @@ class FullEphemerisTransition:
         else:
             self.tofs_bounds = tofs_bounds
 
+        # gradient computation
+        self.economic_gradient = economic_gradient
+
         # store propagator
         self.propagator = propagator
         return
+    
+    def summary(self):
+        """Print info about integrator"""
+        print(f" ******* Full-Ephemeris Transition UDP summary ******* ")
+        print(f" |   economic_gradient: {self.economic_gradient}")
+        return
+
 
     def get_nec(self):
         """Number of equality constraints
@@ -138,6 +150,8 @@ class FullEphemerisTransition:
         # propagate first node forward only
         sol_fwd_list = [self.propagator.solve(et_nodes[0], (0,tofs[0]/2), nodes[0]),]
         sol_bck_list = []
+        if get_sols:
+            et0_fwd_list, et0_bck_list = [et_nodes[0],], []
 
         # propagate intermediate nodes forward and backward
         for idx in range(self.N-2):
@@ -149,11 +163,16 @@ class FullEphemerisTransition:
             sol_fwd_list.append(
                 self.propagator.solve(et_nodes[idx+1], (0,tofs[idx+1]/2), nodes[idx+1])
             )
+            if get_sols:
+                et0_fwd_list.append(et_nodes[idx+1])
+                et0_bck_list.append(et_nodes[idx+1])
 
         # propagate final node backward only
         sol_bck_list.append(
             self.propagator.solve(et_nodes[self.N-1], (0,-tofs[self.N-2]/2), nodes[self.N-1])
         )
+        if get_sols:
+            et0_bck_list.append(et_nodes[self.N-1])
 
         # compute residuals for each interval
         ceqs = []
@@ -172,7 +191,7 @@ class FullEphemerisTransition:
         if get_sols is False:
             return fitness_list
         else:
-            return fitness_list, sol_fwd_list, sol_bck_list
+            return fitness_list, sol_fwd_list, sol_bck_list, et0_fwd_list, et0_bck_list
         
     def gradient_custom(self, x, dx=1e-6, return_list=True):
         """Custom gradient computation
@@ -260,18 +279,24 @@ class FullEphemerisTransition:
         Returns:
             list: gradient of decision variables
         """
-        if use_h:
-            return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
+        if self.economic_gradient:
+            return self.gradient_custom(x, dx=dx)
         else:
-            return pg.estimate_gradient(lambda x: self.fitness(x), x, dx=dx)
+            print("Using pygmo gradient estimation")
+            if use_h:
+                return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
+            else:
+                return pg.estimate_gradient(lambda x: self.fitness(x), x, dx=dx)
     
 
-    def multiple_shooting(self, x0, max_iter=1, ftol=1e-5, dx=1e-6, verbose=True):
+    def multiple_shooting(self, x0, max_iter=1, ftol=1e-5, dx=1e-6, damping=1.0, verbose=True):
         """Multiple shooting method for gradient computation"""
+        assert 0.0 < damping <= 1.0, "`damping` must be in (0,1]"
         # initialize
         x_iter = copy.copy(x0)
         xs_list, fs_list = [], []
         convergence_flag = False
+        tstart = time.time()
 
         for idx in range(max_iter):
             # compute fitness
@@ -282,7 +307,7 @@ class FullEphemerisTransition:
             fs_list.append(f_iter)
 
             if np.linalg.norm(f_iter[1:]) <= ftol:
-                print(f"Met convergence criteria at iteration {idx} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e}")
+                print(f"Met convergence criteria at iteration {idx} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e} | time elapsed = {time.time()-tstart:1.2f} sec")
                 convergence_flag = True
                 break
 
@@ -290,9 +315,10 @@ class FullEphemerisTransition:
                 print(f"Iteration {idx+1} / {max_iter} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e}")
 
             # compute gradient
-            grad_custom = self.gradient_custom(x_iter, dx=dx, return_list=False)
+            grad_custom = np.array(self.gradient(x_iter, dx=dx)).reshape(len(f_iter)+1, len(x_iter))
+            #self.gradient_custom(x_iter, dx=dx, return_list=False)
             DF = grad_custom[1:,:]
 
             # update
-            x_iter = _minimumnorm_iteration(x_iter, f_iter, DF)
+            x_iter = _minimumnorm_iteration(x_iter, f_iter, DF, damping)
         return xs_list, fs_list, convergence_flag

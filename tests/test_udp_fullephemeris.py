@@ -59,17 +59,19 @@ if __name__=="__main__":
 
     # create N-body propagator
     print("Creating N-body integrator...")
+    lstar_nbody = 3000.0
+    naif_ids = ["301", "399", "10"]
+    mus = [spice.bodvrd(ID, "GM", 1)[1][0] for ID in naif_ids]
     et0 = spice.utc2et("2025-12-18T12:28:28")
     mus = [
         mu_cr3bp,    #4902.800066,
         1-mu_cr3bp,  #398600.44,
     ]
     prop_nbody = luna2.PropagatorNBody(
-        "J2000",
-        ["301", "399"], 
+        naif_frame,
+        naif_ids, 
         mus,
-        lstar,
-        tstar,
+        lstar_nbody,
         use_canonical=True,
     )
     res_nbody = prop_nbody.solve(
@@ -114,12 +116,13 @@ if __name__=="__main__":
         nodes_bounds=nodes_bounds,
         tofs_bounds=tofs_bounds,
     )
+    udp.summary()
     lb,ub = udp.get_bounds()
     print(len(lb), len(ub))
 
     # test fitness function evaluation
     print("Testing fitness function evaluation...")
-    xtest = (np.array(ub) + np.array(lb))/2
+    xtest = udp.get_x0()
     fvec, _, _ = udp.fitness(xtest, True)
     #print(f"fvec = {fvec}")
 

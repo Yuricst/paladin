@@ -33,8 +33,8 @@ def _leastsquare_iteration(xi, ferr, df):
 	
 	Args:
 		xi (np.array): length-n array of free variables
-		ferr (np.array): length n array of residuals
-		df (np.array): n by n np.array of Jacobian
+		ferr (np.array): length m array of residuals
+		df (np.array): m by n np.array of Jacobian
 		
 	Returns:
 		(np.array): length-n array of new free variables
@@ -47,13 +47,13 @@ def _leastsquare_iteration(xi, ferr, df):
 
 
 @njit
-def _minimumnorm_iteration(xi, ferr, df):
+def _minimumnorm_iteration(xi, ferr, df, damping=1.0):
 	"""Apply minimum-norm iteration
 	
 	Args:
 		xi (np.array): length-n array of free variables
-		ferr (np.array): length n array of residuals
-		df (np.array): n by n np.array of Jacobian
+		ferr (np.array): length m array of residuals
+		df (np.array): m by n np.array of Jacobian
 		
 	Returns:
 		(np.array): length-n array of new free variables
@@ -61,6 +61,6 @@ def _minimumnorm_iteration(xi, ferr, df):
 	xi_vert = np.reshape(xi, (len(xi), -1))
 	ferr_vert = np.reshape(ferr, (len(ferr), -1))
 	mapDF = np.dot( np.transpose(df), la.pinv( np.dot( df,np.transpose(df)) ) )
-	xii_vert = xi_vert - np.dot( mapDF, ferr_vert)
+	xii_vert = xi_vert - damping * np.dot( mapDF, ferr_vert)
 	return np.reshape(xii_vert, (len(xii_vert),))
 
