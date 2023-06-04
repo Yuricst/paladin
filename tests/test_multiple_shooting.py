@@ -199,7 +199,7 @@ def test_multiple_shooting():
         ax.plot(sol1.y[0,:]*prop_nbody.lstar, sol1.y[1,:]*prop_nbody.lstar, sol1.y[2,:]*prop_nbody.lstar,
             color="magenta", linewidth=0.5)
         ax.scatter(sol1.y[0,-1]*prop_nbody.lstar, sol1.y[1,-1]*prop_nbody.lstar, sol1.y[2,-1]*prop_nbody.lstar,
-            marker="d", edgecolors="magenta", facecolors="None", linewidth=0.5)
+            marker="s", edgecolors="magenta", facecolors="None", linewidth=0.5)
     ax.set_title("Initial guess")
     ax.set(xlabel="x, km", ylabel="y, km", zlabel="z, km")
 
@@ -210,7 +210,7 @@ def test_multiple_shooting():
     # run multiple shooting
     tstart = time.time()
     xs_list, fs_list, convergence_flag = udp.multiple_shooting(
-        x0, max_iter=20, damping=1.0,
+        x0, max_iter=10, damping=0.75,
     )
     tend = time.time()
     print(f"Elapsed time: {tend-tstart:1.4f} sec; convergence_flag = {convergence_flag}")
@@ -233,7 +233,7 @@ def test_multiple_shooting():
         ax.plot(sol1.y[0,:]*prop_nbody.lstar, sol1.y[1,:]*prop_nbody.lstar, sol1.y[2,:]*prop_nbody.lstar,
             color="magenta", linewidth=0.5)
         ax.scatter(sol1.y[0,-1]*prop_nbody.lstar, sol1.y[1,-1]*prop_nbody.lstar, sol1.y[2,-1]*prop_nbody.lstar,
-            marker="d", edgecolors="magenta", facecolors="None", linewidth=0.5)
+            marker="s", edgecolors="magenta", facecolors="None", linewidth=0.5)
     ax.set_title("Multiple shooting result")
     ax.set(xlabel="x, km", ylabel="y, km", zlabel="z, km")
     plt.savefig("../plots/test_multiple_shooting.png", dpi=300)

@@ -307,12 +307,12 @@ class FullEphemerisTransition:
             fs_list.append(f_iter)
 
             if np.linalg.norm(f_iter[1:]) <= ftol:
-                print(f"Met convergence criteria at iteration {idx} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e} | time elapsed = {time.time()-tstart:1.2f} sec")
+                print(f"Met convergence criteria at iteration {idx} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e} : time elapsed = {time.time()-tstart:1.2f} sec")
                 convergence_flag = True
                 break
 
             if verbose:
-                print(f"Iteration {idx+1} / {max_iter} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e}")
+                print(f"Iteration {idx+1} / {max_iter} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e} : time elapsed = {time.time()-tstart:1.2f} sec")
 
             # compute gradient
             grad_custom = np.array(self.gradient(x_iter, dx=dx)).reshape(len(f_iter)+1, len(x_iter))
