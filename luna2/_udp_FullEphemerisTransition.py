@@ -4,11 +4,13 @@ UDP for transitioning to full ephemeris model
 
 import numpy as np
 import pygmo as pg
-from scipy.linalg import block_diag
 import time
 import copy
+from scipy.linalg import block_diag
+from scipy.optimize import line_search
 
 from ._newtonraphson import _newtonraphson_iteration, _leastsquare_iteration, _minimumnorm_iteration
+
 
 class FullEphemerisTransition:
     """UDP as problem to transition to full ephemeris model
@@ -314,6 +316,8 @@ class FullEphemerisTransition:
             if verbose:
                 print(f"Iteration {idx+1} / {max_iter} : ||f|| = {np.linalg.norm(f_iter[1:]):1.4e} : time elapsed = {time.time()-tstart:1.2f} sec")
 
+            # TODO: implement line-search
+            
             # compute gradient
             grad_custom = np.array(self.gradient(x_iter, dx=dx)).reshape(len(f_iter)+1, len(x_iter))
             #self.gradient_custom(x_iter, dx=dx, return_list=False)

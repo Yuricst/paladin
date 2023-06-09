@@ -92,7 +92,7 @@ def test_multiple_shooting():
     prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
     #t_eval = np.linspace(0,period,500)
     node_interval = period/3
-    n_node = 15
+    n_node = 16
     t_eval = [node_interval*i for i in range(n_node)]
     res_cr3bp = prop_cr3bp.solve(
         [0,t_eval[-1]], x0_cr3bp, t_eval=t_eval, dense_output=True
@@ -105,7 +105,7 @@ def test_multiple_shooting():
 
     # transform CR3BP guess to propagator's frame
     naif_frame = "ECLIPJ2000"
-    et0_str = "2025-12-24T18:30:28"  #"2025-12-18T12:28:28"
+    et0_str = "2025-08-03T18:30:28"  #"2025-12-18T12:28:28"
     print(f"et0 = {et0_str}")
     et0 = spice.utc2et(et0_str)
     
@@ -210,11 +210,14 @@ def test_multiple_shooting():
     # run multiple shooting
     tstart = time.time()
     xs_list, fs_list, convergence_flag = udp.multiple_shooting(
-        x0, max_iter=10, damping=0.75,
+        x0, max_iter=10, damping=1.0,
     )
     tend = time.time()
+    i_best = np.argmin([np.linalg.norm(f) for f in fs_list])
     print(f"Elapsed time: {tend-tstart:1.4f} sec; convergence_flag = {convergence_flag}")
-    _, sol_fwd_list, sol_bck_list, et0_fwd_list, et0_bck_list = udp.fitness(xs_list[-1], get_sols=True, verbose=False)
+    _, sol_fwd_list, sol_bck_list, et0_fwd_list, et0_bck_list = udp.fitness(
+        xs_list[i_best], get_sols=True, verbose=False
+    )
 
     # plot after diff-corr
     fig2 = plt.figure(figsize = (6, 6))
