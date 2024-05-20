@@ -47,6 +47,7 @@ from ._eom_scipy_cr3bp import eom_cr3bp
 from ._eom_scipy_nbody import third_body_battin, eom_nbody
 from ._propagator_scipy_cr3bp import PropagatorCR3BP
 from ._propagator_scipy_nbody import PropagatorNBody
+from ._wrap_propagator import PropagatorWrapper
 
 try:
     from ._propagator_gsl_nbody import GSLPropagatorNBody

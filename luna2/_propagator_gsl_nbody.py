@@ -103,6 +103,7 @@ class GSLPropagatorNBody:
         eps_rel = 1e-14,
         hstart = 1e-6,
         max_iter = 10000000,
+        events = None,
     ):
         """Solve IVP for state with GSL's rk8pd function
         
@@ -175,6 +176,7 @@ class GSLPropagatorNBody:
         eps_rel = 1e-14,
         hstart = 1e-6,
         max_iter = 10000000,
+        events = None,
     ):
         """Solve IVP for state and STM with GSL's rk8pd function
         
