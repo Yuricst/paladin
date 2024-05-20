@@ -1,6 +1,5 @@
 """
-CONFIDENTIAL (C) Mitsubishi Electric Research Labs (MERL) 2023
-Prepare Jacobians of equations of motion
+Symbolic computation of Jacobians
 """
 
 import sympy as sym
