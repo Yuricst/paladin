@@ -3,7 +3,7 @@ Init file in module
 """
 
 # Let users know if they're missing any of our hard dependencies
-_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy", "pygmo")
+_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy")
 _missing_dependencies = []
 
 for _dependency in _hard_dependencies:
@@ -44,11 +44,21 @@ from ._newtonraphson import (
 #from ._heyoka_nbody import build_taylor_nbody
 from ._eom_scipy_cr3bp import eom_cr3bp
 from ._eom_scipy_nbody import third_body_battin, eom_nbody
-from ._propagator_cr3bp import PropagatorCR3BP
-from ._propagator_nbody import PropagatorNBody
+from ._propagator_scipy_cr3bp import PropagatorCR3BP
+from ._propagator_scipy_nbody import PropagatorNBody
 
-# model transition
-from ._udp_FullEphemerisTransition import FullEphemerisTransition
+try:
+    from ._propagator_gsl_nbody import GSLPropagatorNBody
+except:
+    print(f"WARNING : skipping GSL-dependent functions")
+    pass
 
-# algorithms for pygmo
-from ._algo_factory import algo_gradient
+try:
+    # model transition
+    from ._udp_FullEphemerisTransition import FullEphemerisTransition
+
+    # algorithms for pygmo
+    from ._algo_factory import algo_gradient
+except:
+    print(f"WARNING : skipping pygmo-dependent functions")
+    pass

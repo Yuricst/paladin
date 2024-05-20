@@ -1,5 +1,5 @@
 """
-Propagator for full-ephemeris n-body problem
+Propagator with scipy for full-ephemeris n-body problem
 For SPICE inertial frames, see:
 https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/frames.html#Appendix.%20%60%60Built%20in''%20Inertial%20Reference%20Frames
 """
@@ -50,7 +50,7 @@ class PropagatorNBody:
     
     def summary(self):
         """Print info about integrator"""
-        print(f" ******* N-body propagator summary ******* ")
+        print(f" ******* N-body scipy propagator summary ******* ")
         print(f" |   NAIF frame      : {self.naif_frame}")
         print(f" |   NAIF IDs        : {self.naif_ids}")
         print(f" |   GMs             : {self.mus}")
@@ -65,6 +65,11 @@ class PropagatorNBody:
         assert len(state) == 6, "state should be length 6"
         return np.concatenate((state[0:3]/self.lstar, state[3:6]/self.vstar))
 
+    def eom(self, et0, t, x):
+        """Evaluate equations of motion"""
+        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
+        return eom_nbody(t, x, params)
+    
     def solve(
         self, et0, t_span, x0,
         t_eval=None, method="RK45", rtol=1e-11, atol=1e-11, dense_output=False
@@ -90,11 +95,6 @@ class PropagatorNBody:
             eom_nbody, t_span, x0, args=(params,),
             t_eval=t_eval, method=method, rtol=rtol, atol=atol, dense_output=dense_output,
         )
-    
-    def eom(self, et0, t, x):
-        """Evaluate equations of motion"""
-        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
-        return eom_nbody(t, x, params)
     
     def get_stm_cdm(self, et0, tf, x0, h=1e-6, get_svf=False):
         """Get STM from et0 to tf using x0 as initial state

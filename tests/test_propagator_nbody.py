@@ -96,9 +96,25 @@ if __name__=="__main__":
         luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
         t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
     )
-    print("state0: ",
-        luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0]
+    print(f"Final state: {res_nbody_canonical.y[:,-1]}")
+
+    # create GSL-based integrator
+    prop_nbody_canonical = luna2.GSLPropagatorNBody(
+        naif_frame,
+        naif_ids,
+        mus,
+        lstar=lstar_nbody,
+        use_canonical=True,
     )
+    prop_nbody_canonical.summary()
+    res_gsl_canonical = prop_nbody_canonical.solve(
+        et0,
+        [0,res_nbody.t[-1]/tstar_nbody],
+        luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
+        t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
+    )
+    print(f"Final state: {res_gsl_canonical.y[:,-1]}")
+
 
     # plot CR3BP trajectory
     fig = plt.figure(figsize = (6, 6))
@@ -108,11 +124,15 @@ if __name__=="__main__":
     #ax.plot(_states_cr3bp_MC[0,:], _states_cr3bp_MC[1,:], _states_cr3bp_MC[2,:], label="CR3BP")
     ax.plot(res_nbody.y[0,:], res_nbody.y[1,:], res_nbody.y[2,:], label=f"N-body ({naif_frame})")
 
-
     ax.plot(res_nbody_canonical.y[0,:]*lstar_nbody,
             res_nbody_canonical.y[1,:]*lstar_nbody,
             res_nbody_canonical.y[2,:]*lstar_nbody,
         label=f"N-body ({naif_frame} - canonical)")
+    
+    ax.plot(res_gsl_canonical.y[0,:]*lstar_nbody,
+            res_gsl_canonical.y[1,:]*lstar_nbody,
+            res_gsl_canonical.y[2,:]*lstar_nbody,
+        label=f"N-body ({naif_frame} - canonical, GSL)")
     
     ax.legend()
     plt.savefig("../plots/propagation_example.png", dpi=200)

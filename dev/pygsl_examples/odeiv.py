@@ -9,6 +9,7 @@ the output.
 """
 import sys
 import time
+import numpy as np
 import pygsl._numobj as numx
 from pygsl import odeiv
 
@@ -19,21 +20,22 @@ spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
 
 def func(t, y, mu):
-    f = numx.zeros((2,), ) * 1.0
+    #f = numx.zeros((2,), ) * 1.0
+    f = np.zeros(2,)
     f[0] = y[1]
     f[1] = -y[0] - mu * y[1] * (y[0] ** 2 -1)
     ET = spice.utc2et("2025-12-18T12:28:28")
     spice.spkezr("399", ET, "J2000", "NONE", "301")
     return f
 
-# def jac(t, y, mu):
-#     dfdy = numx.ones((2,2),) * 1. 
-#     dfdy[0, 0] = 0.0
-#     dfdy[0, 1] = 1.0
-#     dfdy[1, 0] = -2.0 * mu * y[0] * y[1] - 1.0
-#     dfdy[1, 1] = -mu * (y[0]**2 - 1.0)
-#     dfdt = numx.zeros((2,))
-#     return dfdy, dfdt
+def jac(t, y, mu):
+    dfdy = numx.ones((2,2),) * 1. 
+    dfdy[0, 0] = 0.0
+    dfdy[0, 1] = 1.0
+    dfdy[1, 0] = -2.0 * mu * y[0] * y[1] - 1.0
+    dfdy[1, 1] = -mu * (y[0]**2 - 1.0)
+    dfdt = numx.zeros((2,))
+    return dfdy, dfdt
     
 def run():
 
@@ -52,7 +54,7 @@ def run():
     #stepper = odeiv.step_gear2
     #stepper = odeiv.step_bsimp
     
-    step = stepper(dimension, func, None, mu)
+    step = stepper(dimension, func, jac, mu)
     # All above steppers exept the odeiv.step_bsimp (Buerlisch - Stoer Improved
     # method can calculate without an jacobian ...
     step = stepper(dimension, func, args=mu)

@@ -1,5 +1,5 @@
 """
-Propagator for CR3BP
+Propagator with scipy for CR3BP
 """
 
 import numpy as np
