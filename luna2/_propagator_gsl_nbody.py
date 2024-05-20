@@ -104,6 +104,22 @@ class GSLPropagatorNBody:
         hstart = 1e-6,
         max_iter = 10000000,
     ):
+        """Solve IVP for state with GSL's rk8pd function
+        
+        Args:
+            et0 (float): initial epoch, in ephemeris seconds
+            t_span (list): initial and final integration time
+            x0 (np.array): initial state
+            t_eval (np.array): times at which to store solution
+            method (str): integration method
+            eps_abs (float): absolute tolerance
+            eps_rel (float): relative tolerance
+            hstart (float): initial step size
+            max_iter (int): maximum number of iterations
+            
+        Returns:
+            (bunch object): solution object with properties `t` and `y`
+        """
         assert len(x0) == 6, "Initial state should be length 6!"
 
         # initialize integrator
@@ -114,21 +130,37 @@ class GSLPropagatorNBody:
         control = odeiv.control_y_new(step, eps_abs, eps_rel)
         evolve  = odeiv.evolve(step, control, dimension)
 
-        # initialize storage
-        ts = []
-        ys = []
-
         # apply solve
-        t = t_span[0]
-        t1 = t_span[1]
         y = copy.deepcopy(x0)
         h = hstart
-        for i in range(max_iter):
-            if t >= t1:
-                break
-            t, h, y = evolve.apply(t, t1, h, y)
-            ts.append(t)
-            ys.append(y)
+
+        if t_eval is None:
+            ts = []                 # initialize
+            ys = []                 # initialize
+            t = t_span[0]
+            t1 = t_span[1]
+            for i in range(max_iter):
+                if t >= t1:
+                    break
+                t, h, y = evolve.apply(t, t1, h, y)
+                ts.append(t)
+                ys.append(y)
+
+        else:
+            ts = [t_eval[0],]       # initialize
+            ys = [x0,]              # initialize
+            for i_leg in range(len(t_eval)-1):
+                t = t_eval[i_leg]
+                t1 = t_eval[i_leg+1]
+                for _ in range(max_iter):
+                    if t >= t1:
+                        break
+                    t, h, y = evolve.apply(t, t1, h, y)
+                ts.append(t)
+                ys.append(y)
+
+        # post-processing
+        ts = np.array(ts)
         ys = np.array(ys).T
         return PseudoODESolution(ts, ys)
     
@@ -178,20 +210,36 @@ class GSLPropagatorNBody:
         control = odeiv.control_y_new(step, eps_abs, eps_rel)
         evolve  = odeiv.evolve(step, control, dimension)
 
-        # initialize storage
-        ts = []
-        ys = []
-
         # apply solve
-        t = t_span[0]
-        t1 = t_span[1]
         y = np.concatenate((x0, stm0.flatten()))
         h = hstart
-        for i in range(max_iter):
-            if t >= t1:
-                break
-            t, h, y = evolve.apply(t, t1, h, y)
-            ts.append(t)
-            ys.append(y)
+
+        if t_eval is None:
+            ts = []                 # initialize
+            ys = []                 # initialize
+            t = t_span[0]
+            t1 = t_span[1]
+            for i in range(max_iter):
+                if t >= t1:
+                    break
+                t, h, y = evolve.apply(t, t1, h, y)
+                ts.append(t)
+                ys.append(y)
+
+        else:
+            ts = [t_eval[0],]                               # initialize
+            ys = [np.concatenate((x0, stm0.flatten())),]    # initialize
+            for i_leg in range(len(t_eval)-1):
+                t = t_eval[i_leg]
+                t1 = t_eval[i_leg+1]
+                for _ in range(max_iter):
+                    if t >= t1:
+                        break
+                    t, h, y = evolve.apply(t, t1, h, y)
+                ts.append(t)
+                ys.append(y)
+
+        # post-processing
+        ts = np.array(ts)
         ys = np.array(ys).T
         return PseudoODESolution(ts, ys)

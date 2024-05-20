@@ -52,7 +52,7 @@ if __name__=="__main__":
     # create NRHO propagator
     naif_ids = ["301", "399", "10"]
     mus = [spice.bodvrd(ID, "GM", 1)[1][0] for ID in naif_ids]
-    prop_nbody = luna2.PropagatorNBody(
+    prop_nbody = luna2.GSLPropagatorNBody(
         naif_frame,
         naif_ids,
         mus,
