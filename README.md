@@ -1,6 +1,6 @@
 # luna2
 
-Cislunar Astrodynamics in Simplified and Full Ephemeris models
+Full-ephemeris integrator in python
 
 <p align="center">
   <img src="./assets/Luna_II.png" width="250" title="luna2">
@@ -8,10 +8,10 @@ Cislunar Astrodynamics in Simplified and Full Ephemeris models
 
 ## Overview
 
-This package provides tools for conducting CR3BP and ephemeris level analysis in cislunar (and R3BP) environments. 
+This package provides tools for conducting CR3BP and ephemeris level analysis in cislunar and deep-space environments. 
 
 While the library is implemented in python, the majority of functionalities are powered by either [SPICE routines](https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/spicelib/index.html) or through numpy/scipy/numba implementations, resulting in (relatively) fast computations. 
-Furthermore, no compiling is needed, making the library easily portable & ready to go.
+For numerical integration of ODEs, `luna2` provides the option of using either `scipy` or `gsl`; the latter is recommended due to higher accuracy. 
 
 Optimization is conducted by constructing problems as [`pygmo` udp's](https://esa.github.io/pygmo2/index.html), which can then be solved through a variety of compatible solvers, including IPOPT, SNOPT, or WORHP (the latter two requires licenses). 
 
