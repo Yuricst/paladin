@@ -3,7 +3,7 @@ Init file in module
 """
 
 # Let users know if they're missing any of our hard dependencies
-_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy")
+_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy", "sympy")
 _missing_dependencies = []
 
 for _dependency in _hard_dependencies:
@@ -39,9 +39,10 @@ from ._newtonraphson import (
     _minimumnorm_iteration,
 )
 
+# symbolic jacobian
+from ._symbolic_jacobians import get_jaocbian_expr_Nbody, get_jaocbian_expr_Nbody_srp_j2
 
 # propagation
-#from ._heyoka_nbody import build_taylor_nbody
 from ._eom_scipy_cr3bp import eom_cr3bp
 from ._eom_scipy_nbody import third_body_battin, eom_nbody
 from ._propagator_scipy_cr3bp import PropagatorCR3BP

@@ -11,10 +11,9 @@ import matplotlib.pyplot as plt
 import pygsl._numobj as numx
 from pygsl import odeiv
 
-
-from ._eom_scipy_nbody import eom_nbody
+from ._symbolic_jacobians import get_jaocbian_expr_Nbody
+from ._eom_scipy_nbody import eom_nbody, eomstm_nbody
 from ._plotter import set_equal_axis
-
 
 class PseudoODESolution:
     """Class for storing time and states in a format similar to ODE solution from solve_ivp.
@@ -37,6 +36,7 @@ class GSLPropagatorNBody:
         mus,
         lstar = 3000.0,
         use_canonical=False,
+        analytical_jacobian = True,
     ):
         """Initialize propagator.
         The spacecraft's N-body problem is formulated with `naif_ids[0]` as the primary body.
@@ -61,6 +61,13 @@ class GSLPropagatorNBody:
         else:
             self.mus_use = self.mus
             self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
+        
+        # analytical jacobian 
+        self.analytical_jacobian = analytical_jacobian
+        if self.analytical_jacobian:
+            self.jac_func = get_jaocbian_expr_Nbody(self.mus_use)
+        else:
+            self.jac_func = None
         return
     
     def summary(self):
@@ -73,6 +80,7 @@ class GSLPropagatorNBody:
         print(f" |   lstar           : {self.lstar}")
         print(f" |   tstar           : {self.tstar}")
         print(f" |   vstar           : {self.vstar}")
+        print(f" |   Jacobian        : {self.analytical_jacobian}")
         print(f" ----------------------------------------- ")
         return
     
@@ -114,6 +122,70 @@ class GSLPropagatorNBody:
         t = t_span[0]
         t1 = t_span[1]
         y = copy.deepcopy(x0)
+        h = hstart
+        for i in range(max_iter):
+            if t >= t1:
+                break
+            t, h, y = evolve.apply(t, t1, h, y)
+            ts.append(t)
+            ys.append(y)
+        ys = np.array(ys).T
+        return PseudoODESolution(ts, ys)
+    
+    def solve_stm(
+        self,
+        et0,
+        t_span,
+        x0,
+        stm0 = None,
+        t_eval = None,
+        eps_abs = 1e-12,
+        eps_rel = 1e-14,
+        hstart = 1e-6,
+        max_iter = 10000000,
+    ):
+        """Solve IVP for state and STM with GSL's rk8pd function
+        
+        Args:
+            et0 (float): initial epoch, in ephemeris seconds
+            t_span (list): initial and final integration time
+            x0 (np.array): initial state
+            stm0 (np.array): initial STM; if None, identity matrix is used
+            t_eval (np.array): times at which to store solution
+            method (str): integration method
+            eps_abs (float): absolute tolerance
+            eps_rel (float): relative tolerance
+            hstart (float): initial step size
+            max_iter (int): maximum number of iterations
+            
+        Returns:
+            (bunch object): solution object with properties `t` and `y`
+        """
+        assert len(x0) == 6, "Initial state should be length 6!"
+        assert self.jac_func is not None, "Jacobian function not available!"
+
+        if stm0 is None:
+            stm0 = np.eye(6)
+        else:
+            assert stm0.shape == (6,6), "STM should be 6x6 matrix"
+
+        # initialize integrator
+        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, 
+                  self.naif_frame, self.jac_func]
+        stepper = odeiv.step_rk8pd
+        dimension = 42
+        step = stepper(dimension, eomstm_nbody, args = params)
+        control = odeiv.control_y_new(step, eps_abs, eps_rel)
+        evolve  = odeiv.evolve(step, control, dimension)
+
+        # initialize storage
+        ts = []
+        ys = []
+
+        # apply solve
+        t = t_span[0]
+        t1 = t_span[1]
+        y = np.concatenate((x0, stm0.flatten()))
         h = hstart
         for i in range(max_iter):
             if t >= t1:

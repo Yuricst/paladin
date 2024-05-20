@@ -90,31 +90,32 @@ if __name__=="__main__":
         use_canonical=True,
     )
     prop_nbody_canonical.summary()
-    res_nbody_canonical = prop_nbody_canonical.solve(
+    res_nbody_canonical = prop_nbody_canonical.solve_stm(
         et0,
         [0,res_nbody.t[-1]/tstar_nbody],
         luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
         t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
     )
-    print(f"Final state: {res_nbody_canonical.y[:,-1]}")
+    print(f"Final state: {res_nbody_canonical.y[0:6,-1]}")
+    print(f"Final STM: \n{res_nbody_canonical.y[6:,-1].reshape(6,6)}")
 
     # create GSL-based integrator
-    prop_nbody_canonical = luna2.GSLPropagatorNBody(
+    propgsl_nbody_canonical = luna2.GSLPropagatorNBody(
         naif_frame,
         naif_ids,
         mus,
         lstar=lstar_nbody,
         use_canonical=True,
     )
-    prop_nbody_canonical.summary()
-    res_gsl_canonical = prop_nbody_canonical.solve(
+    propgsl_nbody_canonical.summary()
+    res_gsl_canonical = propgsl_nbody_canonical.solve_stm(
         et0,
         [0,res_nbody.t[-1]/tstar_nbody],
         luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
         t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
     )
-    print(f"Final state: {res_gsl_canonical.y[:,-1]}")
-
+    print(f"Final state: {res_gsl_canonical.y[0:6,-1]}")
+    print(f"Final STM: \n{res_gsl_canonical.y[6:,-1].reshape(6,6)}")
 
     # plot CR3BP trajectory
     fig = plt.figure(figsize = (6, 6))

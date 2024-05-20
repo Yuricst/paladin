@@ -40,3 +40,36 @@ def eom_nbody(t,states,params):
         # Add to accelerations
         dstates[3:6] += accel3
     return dstates
+
+
+def eomstm_nbody(t,states,params):
+    """Equations of motion of N-body problem with STM"""
+    # unpack states and params
+    mus, naif_ids, et0, lstar, tstar, naif_frame, jac_func = params
+
+    # initialize derivatives
+    dstates = np.concatenate((
+        states[3:6],
+        -mus[0]/np.linalg.norm(states[0:3])**3 * states[0:3],
+    ))
+
+    # Iterate through extra bodies
+    pos_3bd_list = []
+    for idx in range(len(mus)-1):
+        rvec3, _ = spice.spkpos(
+            naif_ids[idx+1], et0 + t*tstar, 
+            naif_frame, "NONE", naif_ids[0]
+        )
+        accel3 = third_body_battin(
+            states[0:3], rvec3/lstar, mus[idx+1]
+        )
+        # Add to accelerations
+        dstates[3:6] += accel3
+        # store for STM derivative copmutation later
+        pos_3bd_list.append(rvec3[0:3]/lstar)
+    
+    # Compute STM derivative
+    stm = states[6:].reshape(6,6)
+    jac = jac_func(states[0:6], mus, pos_3bd_list)
+    dstm = jac @ stm
+    return np.concatenate((dstates, dstm.reshape(36,)))
