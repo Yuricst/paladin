@@ -1,4 +1,4 @@
-# paladin: python library for astrodynamics
+# `paladin` : python library for astrodynamics
 
 ## Overview
 
