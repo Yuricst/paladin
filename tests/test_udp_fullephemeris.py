@@ -12,7 +12,7 @@ import pygmo_plugins_nonfree as ppnf
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
@@ -34,14 +34,14 @@ if __name__=="__main__":
     period = 1.3960732332950263E+0
 
     # create CR3BP propagator & propagate over one period
-    prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
+    prop_cr3bp = paladin.PropagatorCR3BP(mu_cr3bp)
     #t_eval = np.linspace(0,period,500)   
     t_eval = [0, period/2, period, 1.5*period, 2*period]
     res_cr3bp = prop_cr3bp.solve(
         [0,t_eval[-1]], x0_cr3bp, t_eval=t_eval, dense_output=True
     )
-    states_cr3bp_MC = luna2.canonical_to_dimensional(
-        luna2.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
+    states_cr3bp_MC = paladin.canonical_to_dimensional(
+        paladin.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
         lstar, 
         vstar
     )
@@ -49,13 +49,13 @@ if __name__=="__main__":
     # transform to propagator's frame
     et0 = spice.utc2et("2025-12-18T12:28:28")
     epochs = et0 + res_cr3bp.t*tstar
-    states_J2000 = luna2.apply_frame_transformation(
+    states_J2000 = paladin.apply_frame_transformation(
         epochs,
         states_cr3bp_MC,
         "EARTHMOONROTATINGMC",
         "J2000"
     )
-    states_J2000 = luna2.dimensional_to_canonical(states_J2000, lstar, vstar)
+    states_J2000 = paladin.dimensional_to_canonical(states_J2000, lstar, vstar)
 
     # create N-body propagator
     print("Creating N-body integrator...")
@@ -67,7 +67,7 @@ if __name__=="__main__":
         mu_cr3bp,    #4902.800066,
         1-mu_cr3bp,  #398600.44,
     ]
-    prop_nbody = luna2.PropagatorNBody(
+    prop_nbody = paladin.PropagatorNBody(
         naif_frame,
         naif_ids, 
         mus,
@@ -99,15 +99,15 @@ if __name__=="__main__":
     # create bounds on et0 and nodes
     et0_bounds = [et0 - 1000, et0 + 1000]
     nodes_bounds = [
-        luna2.get_node_bounds_relative(states_J2000[:,0], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
-        luna2.get_node_bounds_relative(states_J2000[:,1], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
-        #luna2.get_node_bounds_relative(states_J2000[:,2], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
-        #luna2.get_node_bounds_relative(states_J2000[:,3], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
-        #luna2.get_node_bounds_relative(states_J2000[:,4], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        paladin.get_node_bounds_relative(states_J2000[:,0], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        paladin.get_node_bounds_relative(states_J2000[:,1], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        #paladin.get_node_bounds_relative(states_J2000[:,2], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        #paladin.get_node_bounds_relative(states_J2000[:,3], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
+        #paladin.get_node_bounds_relative(states_J2000[:,4], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05]),
     ]
 
     # create UDP for full-ephemeris transition
-    udp = luna2.FullEphemerisTransition(
+    udp = paladin.FullEphemerisTransition(
         prop_nbody,
         et0,
         nodes,
@@ -135,7 +135,7 @@ if __name__=="__main__":
 
     # solve with NLP solver
     print("Creating algorithm...")
-    algo = luna2.algo_gradient(
+    algo = paladin.algo_gradient(
         name="ipopt", 
         #snopt7_path=os.getenv("SNOPT_SO"),
         max_iter=0,

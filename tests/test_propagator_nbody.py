@@ -10,7 +10,7 @@ import os
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 matplotlib.rcParams.update({'font.size': 14})
 
@@ -35,10 +35,10 @@ if __name__=="__main__":
     period = 2 * 1.3960732332950263E+0
 
     # create CR3BP propagator & propagate over one period
-    prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
+    prop_cr3bp = paladin.PropagatorCR3BP(mu_cr3bp)
     res_cr3bp = prop_cr3bp.solve([0,period], x0_cr3bp, t_eval=np.linspace(0,period,1000))
-    states_cr3bp_MC = luna2.canonical_to_dimensional(
-        luna2.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
+    states_cr3bp_MC = paladin.canonical_to_dimensional(
+        paladin.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
         lstar, 
         vstar
     )
@@ -47,7 +47,7 @@ if __name__=="__main__":
     naif_frame = "ECLIPJ2000"
     et0 = spice.utc2et("2025-12-18T12:28:28")
     epochs = et0 + res_cr3bp.t*tstar
-    states_J2000 = luna2.apply_frame_transformation(
+    states_J2000 = paladin.apply_frame_transformation(
         epochs,
         states_cr3bp_MC,
         "EARTHMOONROTATINGMC",
@@ -63,7 +63,7 @@ if __name__=="__main__":
         398600.435507226,
         132712440018.0,
     ]
-    prop_nbody = luna2.PropagatorNBody(
+    prop_nbody = paladin.PropagatorNBody(
         naif_frame,
         naif_ids, 
         mus,
@@ -82,7 +82,7 @@ if __name__=="__main__":
     lstar_nbody = 3000.0
     vstar_nbody = np.sqrt(4902.800066/lstar_nbody)
     tstar_nbody = lstar_nbody/vstar_nbody
-    prop_nbody_canonical = luna2.PropagatorNBody(
+    prop_nbody_canonical = paladin.PropagatorNBody(
         naif_frame,
         naif_ids,
         mus,
@@ -93,14 +93,14 @@ if __name__=="__main__":
     res_nbody_canonical = prop_nbody_canonical.solve_stm(
         et0,
         [0,res_nbody.t[-1]/tstar_nbody],
-        luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
+        paladin.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
         t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
     )
     print(f"Final state: {res_nbody_canonical.y[0:6,-1]}")
     print(f"Final STM: \n{res_nbody_canonical.y[6:,-1].reshape(6,6)}")
 
     # create GSL-based integrator
-    propgsl_nbody_canonical = luna2.GSLPropagatorNBody(
+    propgsl_nbody_canonical = paladin.GSLPropagatorNBody(
         naif_frame,
         naif_ids,
         mus,
@@ -111,7 +111,7 @@ if __name__=="__main__":
     res_gsl_canonical = propgsl_nbody_canonical.solve_stm(
         et0,
         [0,res_nbody.t[-1]/tstar_nbody],
-        luna2.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
+        paladin.dimensional_to_canonical(states_J2000, lstar_nbody, vstar_nbody)[:,0],
         t_eval=np.linspace(0, res_nbody.t[-1]/tstar_nbody, 1000)
     )
     print(f"Final state: {res_gsl_canonical.y[0:6,-1]}")

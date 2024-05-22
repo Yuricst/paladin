@@ -11,7 +11,7 @@ import os
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 matplotlib.rcParams.update({'font.size': 14})
 
@@ -47,12 +47,12 @@ if __name__=="__main__":
     ax = plt.axes(projection = '3d')
     ax.plot(sv_baseline[:,0], sv_baseline[:,1], sv_baseline[:,2],
         color="black", label="Baseline")
-    luna2.set_equal_axis(ax, sv_baseline[:,0], sv_baseline[:,1], sv_baseline[:,2])
+    paladin.set_equal_axis(ax, sv_baseline[:,0], sv_baseline[:,1], sv_baseline[:,2])
 
     # create NRHO propagator
     naif_ids = ["301", "399", "10"]
     mus = [spice.bodvrd(ID, "GM", 1)[1][0] for ID in naif_ids]
-    prop_nbody = luna2.GSLPropagatorNBody(
+    prop_nbody = paladin.GSLPropagatorNBody(
         naif_frame,
         naif_ids,
         mus,

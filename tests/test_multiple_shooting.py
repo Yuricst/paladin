@@ -14,7 +14,7 @@ import time
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 
 matplotlib.rcParams.update({'font.size': 14})
@@ -89,7 +89,7 @@ def test_multiple_shooting():
     period = 1.3960732332950263E+0
 
     # create CR3BP propagator & propagate over one period
-    prop_cr3bp = luna2.PropagatorCR3BP(mu_cr3bp)
+    prop_cr3bp = paladin.PropagatorCR3BP(mu_cr3bp)
     #t_eval = np.linspace(0,period,500)
     node_interval = period/3
     n_node = 16
@@ -97,8 +97,8 @@ def test_multiple_shooting():
     res_cr3bp = prop_cr3bp.solve(
         [0,t_eval[-1]], x0_cr3bp, t_eval=t_eval, dense_output=True
     )
-    states_cr3bp_MC = luna2.canonical_to_dimensional(
-        luna2.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
+    states_cr3bp_MC = paladin.canonical_to_dimensional(
+        paladin.shift_barycenter_to_m2(res_cr3bp.y, mu_cr3bp),
         lstar, 
         vstar
     )
@@ -110,7 +110,7 @@ def test_multiple_shooting():
     et0 = spice.utc2et(et0_str)
     
     epochs = et0 + res_cr3bp.t*tstar
-    states_J2000 = luna2.apply_frame_transformation(
+    states_J2000 = paladin.apply_frame_transformation(
         epochs,
         states_cr3bp_MC,
         "EARTHMOONROTATINGMC",
@@ -123,7 +123,7 @@ def test_multiple_shooting():
     naif_ids = ["301", "399", "10"]
     mus = [spice.bodvrd(ID, "GM", 1)[1][0] for ID in naif_ids]
 
-    prop_nbody = luna2.PropagatorNBody(
+    prop_nbody = paladin.PropagatorNBody(
         naif_frame,
         naif_ids, 
         mus,
@@ -131,7 +131,7 @@ def test_multiple_shooting():
         use_canonical=True,
     )
     tf_nbody = res_cr3bp.t[-1]*tstar/prop_nbody.tstar
-    states_J2000 = luna2.dimensional_to_canonical(states_J2000, prop_nbody.lstar, prop_nbody.vstar)
+    states_J2000 = paladin.dimensional_to_canonical(states_J2000, prop_nbody.lstar, prop_nbody.vstar)
     prop_nbody.summary()
 
     # integrate
@@ -161,12 +161,12 @@ def test_multiple_shooting():
     # create bounds on et0 and nodes
     delta_et0_bounds = [-1000, 1000]
     nodes_bounds = [
-        luna2.get_node_bounds_relative(states_J2000[:,i], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05])
+        paladin.get_node_bounds_relative(states_J2000[:,i], [0.15, 0.05, 0.15, 0.05, 0.15, 0.05])
         for i in range(n_node)
     ]
 
     # create UDP for full-ephemeris transition
-    udp = luna2.FullEphemerisTransition(
+    udp = paladin.FullEphemerisTransition(
         prop_nbody,
         et0,
         nodes,
@@ -240,7 +240,7 @@ def test_multiple_shooting():
     ax.set_title("Multiple shooting result")
     ax.set(xlabel="x, km", ylabel="y, km", zlabel="z, km")
     plt.savefig("../plots/test_multiple_shooting.png", dpi=300)
-    #luna2.set_equal_axis(ax, sol0.y[0,:]*prop_nbody.lstar, sol0.y[1,:]*prop_nbody.lstar, sol0.y[2,:]*prop_nbody.lstar,
+    #paladin.set_equal_axis(ax, sol0.y[0,:]*prop_nbody.lstar, sol0.y[1,:]*prop_nbody.lstar, sol0.y[2,:]*prop_nbody.lstar,
     #    scale=1.25, dim3=True)
 
     # plot time-history

@@ -14,7 +14,7 @@ class PropagatorWrapper:
     Appended method is `solve(t_span, x0)`, which makes call to the ingerited propagator.
 
     Args:
-        propagator (object): propagator object, e.g. luna2.GSLPropagatorNBody
+        propagator (object): propagator object, e.g. paladin.GSLPropagatorNBody
         et0 (float): initial epoch, in ephemeris seconds
         eps_abs (float): absolute tolerance
         eps_rel (float): relative tolerance

@@ -9,7 +9,7 @@ import os
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
@@ -30,7 +30,7 @@ if __name__=="__main__":
     tstar = 1.0
     
     # create propagator
-    prop = luna2.PropagatorNBody(
+    prop = paladin.PropagatorNBody(
         "J2000",
         naif_ids, 
         mus,
@@ -49,11 +49,11 @@ if __name__=="__main__":
     epochs = et0 + res.t
 
     # convert state
-    res_EJ = luna2.apply_frame_transformation(epochs, res.y, "J2000", "IAU_EARTH")
+    res_EJ = paladin.apply_frame_transformation(epochs, res.y, "J2000", "IAU_EARTH")
     print(res_EJ.shape)
 
     # transform back
-    res_J = luna2.apply_frame_transformation(epochs, res_EJ, "IAU_EARTH", "J2000")
+    res_J = paladin.apply_frame_transformation(epochs, res_EJ, "IAU_EARTH", "J2000")
 
     # check
     check = res_EJ - res_J

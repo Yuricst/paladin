@@ -8,7 +8,7 @@ import os
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 
 
@@ -23,7 +23,7 @@ if __name__=="__main__":
     period = 1.3960732332950263E+0
 
     # create propagator
-    prop = luna2.PropagatorCR3BP(mu)
+    prop = paladin.PropagatorCR3BP(mu)
 
 
     tof = 4*period
@@ -31,7 +31,7 @@ if __name__=="__main__":
     res = prop.solve([0,tof], x0, t_eval=t_eval)
 
     # shift to Moon-centered coordinates
-    states_shifted = luna2.shift_barycenter_to_m2(res.y, mu)
+    states_shifted = paladin.shift_barycenter_to_m2(res.y, mu)
 
     # plot figure
     fig = plt.figure(figsize = (6, 6))

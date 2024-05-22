@@ -9,7 +9,7 @@ import os
 
 import sys 
 sys.path.append("../")
-import luna2
+import paladin
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
@@ -29,7 +29,7 @@ if __name__=="__main__":
     # build ta
     #ta = build_taylor_nbody(mus, naif_ids, et0)
     # create propagator
-    prop = luna2.PropagatorNBody(
+    prop = paladin.PropagatorNBody(
         "J2000",
         naif_ids, 
         mus,
