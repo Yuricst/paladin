@@ -24,6 +24,9 @@ class PropagatorWrapper:
         self.et0 = et0
         self.eps_abs = eps_abs
         self.eps_rel = eps_rel
+
+        self.rhs = propagator.rhs
+        self.rhs_stm = propagator.rhs_stm
         return
     
     def solve(self, tspan, x0, stm = False, t_eval = None, events = None):
@@ -48,3 +51,15 @@ class PropagatorWrapper:
                 events = events,
             )
         return sol
+    
+    def get_xdot(self, t, x):
+        """Get state-derivative
+        
+        Args:
+            t (float): time
+            x (np.array): state-vector
+        
+        Returns:
+            (np.array): state-derivative
+        """
+        return self.propagator.get_xdot(self.et0, t, x)

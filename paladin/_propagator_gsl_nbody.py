@@ -68,6 +68,10 @@ class GSLPropagatorNBody:
             self.jac_func = get_jaocbian_expr_Nbody(self.mus_use)
         else:
             self.jac_func = None
+
+        # eoms
+        self.rhs = eom_nbody
+        self.rhs_stm = eomstm_nbody
         return
     
     def summary(self):
@@ -245,3 +249,18 @@ class GSLPropagatorNBody:
         ts = np.array(ts)
         ys = np.array(ys).T
         return PseudoODESolution(ts, ys)
+    
+        
+    def get_xdot(self, et0, t, x):
+        """Get state-derivative
+        
+        Args:
+            t (float): time
+            x (np.array): state-vector
+        
+        Returns:
+            (np.array): state-derivative
+        """
+        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, 
+                  self.naif_frame, self.jac_func]
+        return self.rhs(t, x, params)
