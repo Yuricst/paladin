@@ -40,9 +40,10 @@ This package is still in development. For now, please clone the repository and a
 
 #### Roadmap
 
+- [ ] GSL event capability
 - [x] Propagation in CR3BP
 - [x] Propagation in N-body problem
-- [ ] Transition to full-ephemeris model
+- [x] Transition to full-ephemeris model
 - [x] Helper methods for frame transformation
 
 
