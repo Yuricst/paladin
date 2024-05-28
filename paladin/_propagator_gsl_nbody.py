@@ -22,7 +22,8 @@ class PseudoODESolution:
     This is purely for interoperability with EKF.
     """
     def __init__(self, ts, y, t_events=None, y_events=None):
-        assert len(ts) == y.shape[1], "y should be nx-by-N, where N is time-steps"
+        assert len(ts) == y.shape[1],\
+            f"y should be nx-by-N (y.shape = {y.shape}), where N is time-steps (len(ts) = {len(ts)})"
         self.t = ts 
         self.y = y
         self.t_events = t_events
@@ -151,8 +152,8 @@ class GSLPropagatorNBody:
             self.detection_success = False    # initialize detection flag
 
         if t_eval is None:
-            ts = []                 # initialize
-            ys = []                 # initialize
+            ts = [t_span[0],]       # initialize
+            ys = [x0,]              # initialize
             t = t_span[0]
             t1 = t_span[1]
             for i in range(max_iter):
@@ -284,10 +285,10 @@ class GSLPropagatorNBody:
             # initialize event signs
             prev_checks = np.array([event(et0,0,x0) for event in events])
             self.detection_success = False    # initialize detection flag
-
+            
         if t_eval is None:
-            ts = []                 # initialize
-            ys = []                 # initialize
+            ts = [t_span[0],]                                    # initialize
+            ys = [np.concatenate((x0, stm0.flatten())),]         # initialize
             t = t_span[0]
             t1 = t_span[1]
             for i in range(max_iter):
