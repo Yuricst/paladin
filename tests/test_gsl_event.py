@@ -98,7 +98,6 @@ if __name__=="__main__":
                            res_nbody.y[2,:]*prop_nbody.lstar)
     ax.set(xlabel="x, km", ylabel="y, km", zlabel="z, km")
     ax.legend()
-    plt.savefig("../plots/propagation_example_nrho.png", dpi=200)
 
     # # error plot
     # error_pos = res_nbody.y[0:3,:]*prop_nbody.lstar - np.transpose(sv_baseline[:,0:3])
