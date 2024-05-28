@@ -1,5 +1,10 @@
 # `paladin` : python library for astrodynamics
 
+<p align="center">
+  <img src="./assets/paladin_sd.jpg" width="400" title="Paladin chuuni">
+</p>
+
+
 ## Overview
 
 This package provides tools for conducting CR3BP and ephemeris level analysis in cislunar and deep-space environments. 
