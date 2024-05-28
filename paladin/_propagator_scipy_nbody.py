@@ -81,8 +81,16 @@ class PropagatorNBody:
         return eom_nbody(t, x, params)
     
     def solve(
-        self, et0, t_span, x0,
-        t_eval=None, method="RK45", rtol=1e-11, atol=1e-11, dense_output=False
+        self,
+        et0,
+        t_span,
+        x0,
+        t_eval=None,
+        method="RK45",
+        rtol=1e-11,
+        atol=1e-11,
+        dense_output=False,
+        events=None,
     ):
         """Solve IVP for state with solve_ivp function
         
@@ -95,6 +103,7 @@ class PropagatorNBody:
             rtol (float): relative tolerance
             atol (float): absolute tolerance
             dense_output (bool): whether to return dense output
+            events (callable, or list of callables, optional): events to track
         
         Returns:
             (bunch object): returned object from `scipy.integrate.solve_ivp`
@@ -103,12 +112,22 @@ class PropagatorNBody:
         params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
         return solve_ivp(
             eom_nbody, t_span, x0, args=(params,),
-            t_eval=t_eval, method=method, rtol=rtol, atol=atol, dense_output=dense_output,
+            t_eval=t_eval, method=method, rtol=rtol, atol=atol,
+            events=events, dense_output=dense_output,
         )
     
     def solve_stm(
-        self, et0, t_span, x0,
-        stm0 = None, t_eval=None, method="RK45", eps_rel=1e-11, eps_abs=1e-11, dense_output=False
+        self,
+        et0,
+        t_span,
+        x0,
+        stm0 = None,
+        t_eval=None,
+        method="RK45",
+        eps_rel=1e-11,
+        eps_abs=1e-11,
+        dense_output=False,
+        events=None,
     ):
         """Solve IVP for state and STM with solve_ivp function
         
@@ -122,6 +141,7 @@ class PropagatorNBody:
             eps_rel (float): relative tolerance
             eps_abs (float): absolute tolerance
             dense_output (bool): whether to return dense output
+            events (callable, or list of callables, optional): events to track
         
         Returns:
             (bunch object): returned object from `scipy.integrate.solve_ivp`
@@ -138,7 +158,8 @@ class PropagatorNBody:
                   self.naif_frame, self.jac_func]
         return solve_ivp(
             eomstm_nbody, t_span, np.concatenate((x0, stm0.flatten())), args=(params,),
-            t_eval=t_eval, method=method, rtol=eps_rel, atol=eps_abs, dense_output=dense_output,
+            t_eval=t_eval, method=method, rtol=eps_rel, atol=eps_abs, 
+            events=events, dense_output=dense_output,
         )
     
     def get_stm_cdm(self, et0, tf, x0, h=1e-6, get_svf=False):
