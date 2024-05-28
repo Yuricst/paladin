@@ -36,6 +36,24 @@ Users are responsible for downloading [the generic SPICE kernels froom the NAIF 
 - `gm_de440.tpc` 
 
 
+## GSL setup
+
+### On Mac OSX (via MacPorts)
+
+0. Install gsl via MacPorts
+
+```
+sudo port install gsl
+```
+
+1. Install `pygsl`
+
+```
+pip install pygsl
+```
+
+
+
 ## Installation
 
 This package is still in development. For now, please clone the repository and add to path.
