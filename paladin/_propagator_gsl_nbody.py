@@ -14,6 +14,8 @@ from pygsl import odeiv
 from ._symbolic_jacobians import get_jaocbian_expr_Nbody
 from ._eom_scipy_nbody import eom_nbody, eomstm_nbody
 from ._plotter import set_equal_axis
+from ._gsl_event import gsl_event_rootfind
+
 
 class PseudoODESolution:
     """Class for storing time and states in a format similar to ODE solution from solve_ivp.
@@ -108,6 +110,8 @@ class GSLPropagatorNBody:
         hstart = 1e-6,
         max_iter = 10000000,
         events = None,
+        tol_event = 1e-6,
+        maxiter_event = 30,
     ):
         """Solve IVP for state with GSL's rk8pd function
         
@@ -121,6 +125,7 @@ class GSLPropagatorNBody:
             eps_rel (float): relative tolerance
             hstart (float): initial step size
             max_iter (int): maximum number of iterations
+            events (list of callable): event function with syntax `event(et0,t,y)` to track
             
         Returns:
             (bunch object): solution object with properties `t` and `y`
@@ -137,7 +142,13 @@ class GSLPropagatorNBody:
 
         # apply solve
         y = copy.deepcopy(x0)
-        h = hstart
+        h = abs(hstart) * np.sign(t_span[1] - t_span[0])
+
+        # event check array
+        if events is not None:
+            # initialize event signs
+            prev_checks = np.array([event(et0,0,x0) for event in events])
+            self.detection_success = False    # initialize detection flag
 
         if t_eval is None:
             ts = []                 # initialize
@@ -145,22 +156,68 @@ class GSLPropagatorNBody:
             t = t_span[0]
             t1 = t_span[1]
             for i in range(max_iter):
-                if t >= t1:
+                if abs(t) >= abs(t1):
                     break
                 t, h, y = evolve.apply(t, t1, h, y)
+                if events is not None:
+                    detected, idx_event, prev_checks = self._check_events(
+                        prev_checks = prev_checks,
+                        et0 = et0,
+                        t = t,
+                        y = y,
+                        events = events,
+                    )
+                    if detected:
+                        t_event, y_event, self.detection_success = gsl_event_rootfind(
+                            evolve = evolve,
+                            event = events[idx_event],
+                            et0 = et0,
+                            t_bounds = [ts[-1], t],
+                            y_bounds = [ys[-1], y],
+                            tol = tol_event,
+                            maxiter = maxiter_event,
+                        )
+                        ts.append(t_event)
+                        ys.append(y_event)
+                        break
                 ts.append(t)
                 ys.append(y)
 
         else:
+            detected = False        # initialize
             ts = [t_eval[0],]       # initialize
             ys = [x0,]              # initialize
             for i_leg in range(len(t_eval)-1):
                 t = t_eval[i_leg]
                 t1 = t_eval[i_leg+1]
                 for _ in range(max_iter):
-                    if t >= t1:
+                    if abs(t) >= abs(t1):
                         break
                     t, h, y = evolve.apply(t, t1, h, y)
+                    if events is not None:
+                        detected, idx_event, prev_checks = self._check_events(
+                            prev_checks = prev_checks,
+                            et0 = et0,
+                            t = t,
+                            y = y,
+                            events = events,
+                        )
+                        if detected:
+                            t_event, y_event, self.detection_success = gsl_event_rootfind(
+                                evolve = evolve,
+                                event = events[idx_event],
+                                et0 = et0,
+                                t_bounds = [ts[-1], t],
+                                y_bounds = [ys[-1], y],
+                                tol = tol_event,
+                                maxiter = maxiter_event,
+                            )
+                            ts.append(t_event)
+                            ys.append(y_event)
+                            break
+                # check if event has been detected
+                if detected:
+                    break
                 ts.append(t)
                 ys.append(y)
 
@@ -181,6 +238,8 @@ class GSLPropagatorNBody:
         hstart = 1e-6,
         max_iter = 10000000,
         events = None,
+        tol_event = 1e-6,
+        maxiter_event = 30,
     ):
         """Solve IVP for state and STM with GSL's rk8pd function
         
@@ -218,7 +277,13 @@ class GSLPropagatorNBody:
 
         # apply solve
         y = np.concatenate((x0, stm0.flatten()))
-        h = hstart
+        h = abs(hstart) * np.sign(t_span[1] - t_span[0])
+
+        # event check array
+        if events is not None:
+            # initialize event signs
+            prev_checks = np.array([event(et0,0,x0) for event in events])
+            self.detection_success = False    # initialize detection flag
 
         if t_eval is None:
             ts = []                 # initialize
@@ -226,22 +291,68 @@ class GSLPropagatorNBody:
             t = t_span[0]
             t1 = t_span[1]
             for i in range(max_iter):
-                if t >= t1:
+                if abs(t) >= abs(t1):
                     break
                 t, h, y = evolve.apply(t, t1, h, y)
+                if events is not None:
+                    detected, idx_event, prev_checks = self._check_events(
+                        prev_checks = prev_checks,
+                        et0 = et0,
+                        t = t,
+                        y = y,
+                        events = events,
+                    )
+                    if detected:
+                        t_event, y_event, self.detection_success = gsl_event_rootfind(
+                            evolve = evolve,
+                            event = events[idx_event],
+                            et0 = et0,
+                            t_bounds = [ts[-1], t],
+                            y_bounds = [ys[-1], y],
+                            tol = tol_event,
+                            maxiter = maxiter_event,
+                        )
+                        ts.append(t_event)
+                        ys.append(y_event)
+                        break
                 ts.append(t)
                 ys.append(y)
 
         else:
+            detected = False        # initialize
             ts = [t_eval[0],]                               # initialize
             ys = [np.concatenate((x0, stm0.flatten())),]    # initialize
             for i_leg in range(len(t_eval)-1):
                 t = t_eval[i_leg]
                 t1 = t_eval[i_leg+1]
                 for _ in range(max_iter):
-                    if t >= t1:
+                    if abs(t) >= abs(t1):
                         break
                     t, h, y = evolve.apply(t, t1, h, y)
+                    if events is not None:
+                        detected, idx_event, prev_checks = self._check_events(
+                            prev_checks = prev_checks,
+                            et0 = et0,
+                            t = t,
+                            y = y,
+                            events = events,
+                        )
+                        if detected:
+                            t_event, y_event, self.detection_success = gsl_event_rootfind(
+                                evolve = evolve,
+                                event = events[idx_event],
+                                et0 = et0,
+                                t_bounds = [ts[-1], t],
+                                y_bounds = [ys[-1], y],
+                                tol = tol_event,
+                                maxiter = maxiter_event,
+                            )
+                            ts.append(t_event)
+                            ys.append(y_event)
+                            break
+                # check if event has been detected
+                if detected:
+                    break
                 ts.append(t)
                 ys.append(y)
 
@@ -250,7 +361,17 @@ class GSLPropagatorNBody:
         ys = np.array(ys).T
         return PseudoODESolution(ts, ys)
     
-        
+    
+    def _check_events(self, prev_checks, et0, t, y, events):
+        """Internal function to check for events"""
+        curr_checks = np.array([event(et0,t,y) for event in events])
+        checks = np.dot(curr_checks, prev_checks)
+        detected_indices = np.where(checks < 0)[0]
+        if len(detected_indices) > 0:
+            return True, detected_indices[0], curr_checks
+        else:
+            return False, None, curr_checks
+            
     def get_xdot(self, et0, t, x):
         """Get state-derivative
         
