@@ -366,12 +366,11 @@ class GSLPropagatorNBody:
     def _check_events(self, prev_checks, et0, t, y, events):
         """Internal function to check for events"""
         curr_checks = np.array([event(et0,t,y) for event in events])
-        checks = np.dot(curr_checks, prev_checks)
-        detected_indices = np.where(checks < 0)[0]
-        if len(detected_indices) > 0:
+        checks = np.multiply(curr_checks, prev_checks)
+        if np.any(checks < 0):
+            detected_indices = np.argwhere(checks<0)[0]
             return True, detected_indices[0], curr_checks
-        else:
-            return False, None, curr_checks
+        return False, None, curr_checks
             
     def get_xdot(self, et0, t, x):
         """Get state-derivative
