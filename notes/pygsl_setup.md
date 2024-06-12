@@ -1,21 +1,50 @@
+# `pygsl` setup
 
 
+## 0. Install gsl 
 
-## Installation on mac
+### On Windows:
+For example, follow: https://github.com/hariseldon99/GSL-WIN64?tab=readme-ov-file
 
-0. Install gsl 
+
+### On Mac:
 
 ```
 sudo port install gsl
 ```
 
-1. Install `pygsl`
+### On Linux:
 
+```
+sudo apt-get install libgsl-dev
+```
+
+
+## 1. Install `pygsl`
+
+### On mac: 
 ```
 pip install pygsl
 ```
 
-2. ODE examples
+### On Linux:
+
+If `pip install pygsl` does not work:
+
+Download source: https://github.com/pygsl/pygsl/releases, then run:
+
+```
+tar -xvzf pygsl-x.y.z.tar.gz
+cd pygsl-x.y.z
+python setup.py gsl_wrappers
+python setup.py config
+sudo python setup.py install
+```
+
+Note this requires `swig` and `gcc`. 
+
+
+## 2. ODE examples
 
 See:
 
