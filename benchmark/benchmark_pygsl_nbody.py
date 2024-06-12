@@ -69,6 +69,9 @@ def benchmark_pygsl_nbody(verbose=False, make_plot=False):
     x0 = prop_nbody.dim2nondim(sv_baseline[0,:])
     tf_nondim = tf/prop_nbody.tstar
 
+    print(f"et0 = {et0}")
+    print(f"x0 = {list(x0)}")
+
     def run_solve():
         prop_nbody.solve(
             et0,
