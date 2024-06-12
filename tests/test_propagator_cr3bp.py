@@ -7,12 +7,11 @@ import matplotlib.pyplot as plt
 import os
 
 import sys 
-sys.path.append("../")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 import paladin
 
 
-
-if __name__=="__main__":
+def test_propagator_cr3bp(make_plot = False):
     # list of mus
     mu = 1.215058560962404E-2
     # ID723 in southern halo
@@ -24,18 +23,19 @@ if __name__=="__main__":
 
     # create propagator
     prop = paladin.PropagatorCR3BP(mu)
-
-
-    tof = 4*period
+    tof = 2*period
     t_eval = np.linspace(0,tof,1000)
     res = prop.solve([0,tof], x0, t_eval=t_eval)
 
-    # shift to Moon-centered coordinates
-    states_shifted = paladin.shift_barycenter_to_m2(res.y, mu)
+    if make_plot:
+        # shift to Moon-centered coordinates
+        states_shifted = paladin.shift_barycenter_to_m2(res.y, mu)
+        # plot figure
+        fig = plt.figure(figsize = (6, 6))
+        ax = plt.axes(projection = '3d')
+        ax.plot(states_shifted[0,:], states_shifted[1,:], states_shifted[2,:])
+    assert all(np.abs(res.y[:,-1] - x0) < 1e-9)
 
-    # plot figure
-    fig = plt.figure(figsize = (6, 6))
-    ax = plt.axes(projection = '3d')
-    #ax.plot(res.y[0,:], res.y[1,:], res.y[2,:])
-    ax.plot(states_shifted[0,:], states_shifted[1,:], states_shifted[2,:])
+if __name__=="__main__":
+    test_propagator_cr3bp(make_plot=True)
     plt.show()

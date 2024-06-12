@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 import os
 
 import sys 
-sys.path.append("../")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 import paladin
 
 matplotlib.rcParams.update({'font.size': 14})
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
-spice.furnsh(os.path.join("..", "assets", "spice", "earth_moon_rotating_mc.tf"))  # custom frame kernel
+spice.furnsh(os.path.join(os.path.dirname(__file__), "..", "assets", "spice", "earth_moon_rotating_mc.tf"))  # custom frame kernel
 
 
 if __name__=="__main__":

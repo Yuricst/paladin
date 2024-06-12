@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import os
 
 import sys 
-sys.path.append("../")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 import paladin
 
 spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))

@@ -13,7 +13,7 @@ import os
 import time
 
 import sys 
-sys.path.append("../")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 import paladin
 
 
@@ -23,7 +23,7 @@ spice.furnsh(os.path.join(os.getenv("SPICE"), "lsk", "naif0012.tls"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "spk", "de440.bsp"))
 spice.furnsh(os.path.join(os.getenv("SPICE"), "pck", "gm_de440.tpc"))
 
-spice.furnsh(os.path.join("..", "assets", "spice", "earth_moon_rotating_mc.tf"))  # custom frame kernel
+spice.furnsh(os.path.join(os.path.dirname(__file__), "..", "assets", "spice", "earth_moon_rotating_mc.tf"))  # custom frame kernel
 
 
 def plot_time_history(sol_fwd_list, sol_bck_list, et0_fwd_list, et0_bck_list, prop_nbody):
