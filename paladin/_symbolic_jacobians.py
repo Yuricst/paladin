@@ -16,7 +16,7 @@ def _sym_dot_length3(sym_vec0, sym_vec1):
 
 
 def _sym_cross_prod(sym_vec0, sym_vec1):
-    return sym.Matrix([
+    return sym.Array([
         sym_vec0[1]*sym_vec1[2] - sym_vec0[2]*sym_vec1[1],
         sym_vec0[2]*sym_vec1[0] - sym_vec0[0]*sym_vec1[2],
         sym_vec0[0]*sym_vec1[1] - sym_vec0[1]*sym_vec1[0],
@@ -49,20 +49,6 @@ def _symbolicj2_equator_frame_to_inertial_frame(rvec, mu_r3, k_j2, T_IE):
     ])
     # convert acceleration from equator to inertial frame
     return T_IE * a_j2_equator   #np.dot(T_IE, a_j2_equator)
-
-
-def _symbolic_j2_using_earth_plane(x, mu, k_J2, earth): 
-    """Compute J2 in the form given in Caltech lecture notes"""   
-    perp_z_vec      = _sym_cross_prod(earth[0:3], earth[3:6])
-    perp_vec        = -_sym_cross_prod(earth[0:3], perp_z_vec)
-    M_sc_vec        = x[0:3]
-    M_sc            = _sym_norm_length3(M_sc_vec)
-    M_sc_perp       = (perp_vec/_sym_norm_length3(perp_vec)) * _sym_dot_length3(M_sc_vec, perp_vec)/_sym_norm_length3(perp_vec)
-    M_sc_plane      = sym.Matrix([
-        M_sc_vec[0] - M_sc_perp[0], M_sc_vec[1] - M_sc_perp[1], M_sc_vec[2] - M_sc_perp[2]
-    ])
-    lmbda           = sym.acos(_sym_dot_length3(M_sc_plane, earth[0:3])/_sym_norm_length3(earth[0:3])/_sym_norm_length3(M_sc_plane)) + 6.68*sym.pi/180
-    return mu/(_sym_norm_length3(x[0:3])**3)*((k_J2/M_sc**2)*(3*(sym.sin(lmbda))**2 - 1)) * x[0:3]
 
 
 def get_jaocbian_expr_Nbody(mu_list):
@@ -298,94 +284,6 @@ def get_dfdR1i_expr_Nbody_srp_j2(mu_list):
         modules="numpy",
     )
     return dfdR_expr
-
-
-
-
-def _get_jaocbian_expr_Nbody_srp_j2_wrong(mu_list):
-    """Create Jacobian expression for N-body + SRP + J2 dynamics
-
-    ODE has access to: `params = [mu_list, naif_ids, naif_frame, abcorr, et0, lstar, tstar, k_srp, k_J2]`
-    
-    Args:
-        mu_list 
-
-    Returns:
-        (func): function to compute Jacobian
-    """
-    # number of bodies
-    n_mus = len(mu_list)
-
-    # Define states
-    states = sym.Array(sym.symbols('state:%d' % 6))
-    x,y,z,vx,vy,vz = states  # unpack
-    r = sym.sqrt(x**2 + y**2 + z**2)
-
-    # Define position vectors of 3rd bodies
-    pos_3bd_list = [sym.Array([sym.symbols('state_%d_%d' % (i, j)) for j in range(3)]) for i in range(n_mus-1)]
-
-    # Define constants for SRP
-    r_sun = sym.Array(sym.symbols('r_sun_:%d' % 3))  # technically redundant but for redefined easier handling
-    k_srp = sym.symbols("k_srp")
-
-    # Define constants for J2
-    #T_IE = sym.Matrix(sym.symbols('T_IE_0_0:3 T_IE_1_0:3 T_IE_2_0:3')).reshape(3, 3)
-    earth = sym.Array(sym.symbols('earth_:%d' % 6))  # technically redundant but for redefined easier handling
-    k_j2  = sym.symbols("k_j2")
-
-    # Define mu's
-    mus = sym.symbols('mu:%d' % len(mu_list))
-
-    # Define eoms
-    mu_r3 = mus[0]/r**3
-    ax = -mu_r3 * x
-    ay = -mu_r3 * y
-    az = -mu_r3 * z
-    
-    # Define third-body perturbation's
-    for idx in range(n_mus-1):
-        avec_3bd = _symbolicbattin_3rd_body_perturbation(
-            mus[idx+1], states[0:3], pos_3bd_list[idx],
-        )
-        ax += avec_3bd[0]
-        ay += avec_3bd[1]
-        az += avec_3bd[2]
-
-    # Define SRP
-    ax += k_srp * (x - r_sun[0])
-    ay += k_srp * (y - r_sun[1])
-    az += k_srp * (z - r_sun[2])
-    # Define J2
-    a_j2 = _symbolic_j2_using_earth_plane(
-        states, mus[0], k_j2, earth,
-        #sym.Matrix(states[0:3]), mu_r3, k_j2, T_IE
-    )
-    ax += a_j2[0]
-    ay += a_j2[1]
-    az += a_j2[2]
-
-    # Compute sensitivities
-    Uxx = sym.Matrix([
-        [sym.diff(ax, x), sym.diff(ax, y), sym.diff(ax, z)],
-        [sym.diff(ay, x), sym.diff(ay, y), sym.diff(ay, z)],
-        [sym.diff(az, x), sym.diff(az, y), sym.diff(az, z)],
-    ])
-
-    # concatenate to form system jacobian
-    zero_3by3 = sym.zeros(3,3)
-    identity_3by3 = sym.eye(3)
-    sensitivity_pos = zero_3by3.col_join(Uxx)
-    sensitivity_vel = identity_3by3.col_join(sym.zeros(3,3))
-    jac = sensitivity_pos.row_join(sensitivity_vel)
-
-    # create function
-    jac_expr = sym.utilities.lambdify(
-        [states, mus, pos_3bd_list, k_srp, r_sun, k_j2, earth], 
-        jac, 
-        modules="numpy",
-    )
-    return jac_expr
-
 
 
 if __name__ == "__main__":
