@@ -38,20 +38,7 @@ Users are responsible for downloading [the generic SPICE kernels froom the NAIF 
 
 ## GSL setup
 
-### On Mac OSX (via MacPorts)
-
-0. Install gsl via MacPorts
-
-```
-sudo port install gsl
-```
-
-1. Install `pygsl`
-
-```
-pip install pygsl
-```
-
+See [pygsl setup notes](./notes/pygsl_setup.md)
 
 
 ## Installation
