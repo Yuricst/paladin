@@ -51,8 +51,10 @@ from ._wrap_propagator import PropagatorWrapper
 
 try:
     from ._propagator_gsl_nbody import GSLPropagatorNBody
+    ext_gsl = True
 except:
     print(f"WARNING : skipping GSL-dependent functions")
+    ext_gsl = False
     pass
 
 try:
@@ -61,6 +63,8 @@ try:
 
     # algorithms for pygmo
     from ._algo_factory import algo_gradient
+    ext_pygmo = True
 except:
     print(f"WARNING : skipping pygmo-dependent functions")
+    ext_pygmo = False
     pass
