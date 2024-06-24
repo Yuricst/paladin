@@ -51,13 +51,14 @@ def _symbolicj2_equator_frame_to_inertial_frame(rvec, mu_r3, k_j2, T_IE):
     return T_IE * a_j2_equator   #np.dot(T_IE, a_j2_equator)
 
 
-def get_jaocbian_expr_Nbody(mu_list):
+def get_jaocbian_expr_Nbody(mu_list, cse=True):
     """Create Jacobian expression for N-body + SRP + J2 dynamics
 
     ODE has access to: `params = [mu_list, naif_ids, naif_frame, abcorr, et0, lstar, tstar, k_srp, k_J2]`
     
     Args:
         mu_list: list of gravitational parameters
+        cse (bool): whether to use common subexpression elimination (default: True)
 
     Returns:
         (func): function to compute Jacobian
@@ -110,17 +111,19 @@ def get_jaocbian_expr_Nbody(mu_list):
         [states, mus, pos_3bd_list], 
         jac, 
         modules="numpy",
+        cse = cse,
     )
     return jac_expr
 
 
-def get_jaocbian_expr_Nbody_srp_j2(mu_list):
+def get_jaocbian_expr_Nbody_srp_j2(mu_list, cse=True):
     """Create Jacobian expression for N-body + SRP + J2 dynamics
 
     ODE has access to: `params = [mu_list, naif_ids, naif_frame, abcorr, et0, lstar, tstar, k_srp, k_J2]`
     
     Args:
-        mu_list 
+        mu_list (list): list of gravitational parameters
+        cse (bool): whether to use common subexpression elimination (default: True)
 
     Returns:
         (func): function to compute Jacobian
@@ -198,17 +201,19 @@ def get_jaocbian_expr_Nbody_srp_j2(mu_list):
         [states, mus, pos_3bd_list, k_srp, r_sun, k_j2, T_IE], 
         jac, 
         modules="numpy",
+        cse = cse,
     )
     return jac_expr
 
     
-def get_dfdR1i_expr_Nbody_srp_j2(mu_list):
+def get_dfdR1i_expr_Nbody_srp_j2(mu_list, cse=True):
     """Create dfdR expression for N-body + SRP + J2 dynamics
 
     ODE has access to: `params = [mu_list, naif_ids, naif_frame, abcorr, et0, lstar, tstar, k_srp, k_J2]`
     
     Args:
-        mu_list 
+        mu_list (list): list of gravitational parameters
+        cse (bool): whether to use common subexpression elimination (default: True)
 
     Returns:
         (func): function to compute Jacobian
@@ -282,6 +287,7 @@ def get_dfdR1i_expr_Nbody_srp_j2(mu_list):
         [states, mus, pos_3bd_list, k_srp, r_sun, k_j2, T_IE], 
         dfdR_list, 
         modules="numpy",
+        cse=cse,
     )
     return dfdR_expr
 
