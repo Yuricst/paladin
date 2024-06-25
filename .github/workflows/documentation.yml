@@ -5,8 +5,6 @@ on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: write
 
-theme: jekyll-theme-minimal
-
 jobs:
   docs:
     runs-on: ubuntu-latest
