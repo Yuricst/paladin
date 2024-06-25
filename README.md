@@ -2,10 +2,6 @@
 
 [![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)
 
-<p align="center">
-  <img src="./assets/paladin_sd.jpg" width="300" title="Paladin chuuni">
-</p>
-
 ![](https://github.com/Yuricst/paladin/blob/main/assets/paladin_sd.jpg)
 
 ## Installation
