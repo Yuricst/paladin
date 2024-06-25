@@ -1,6 +1,8 @@
 # `paladin` : python library for astrodynamics
 
-[![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)
+| PyPI     | Documentation |
+| -------- | ------------- |
+| [![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)  | ![documentation workflow](https://github.com/Yuricst/paladin/actions/workflows/documentation.yml/badge.svg)    |
 
 <p align="center">
   <img src="./assets/paladin_sd.jpg" width="300" title="Paladin chuuni">
