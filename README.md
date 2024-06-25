@@ -2,7 +2,7 @@
 
 | PyPI     | Documentation |
 | -------- | ------------- |
-| [![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)  | ![documentation workflow](https://github.com/Yuricst/paladin/actions/workflows/documentation.yml/badge.svg)    |
+| [![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)  | [![documentation workflow](https://github.com/Yuricst/paladin/actions/workflows/documentation.yml/badge.svg)](https://yuricst.github.io/paladin/)    |
 
 
 ## Installation
