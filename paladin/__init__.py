@@ -2,8 +2,16 @@
 Init file in module
 """
 
+__copyright__    = 'Copyright (C) 2023 Yuri Shimane'
+__version__      = '0.1.3'
+__license__      = 'MIT License'
+__author__       = 'Yuri Shimane'
+__author_email__ = 'yuri.shimane@gatech.edu'
+__url__          = 'https://github.com/Yuricst/paladin'
+
+
 # Let users know if they're missing any of our hard dependencies
-_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy", "sympy")
+_hard_dependencies = ("numpy", "matplotlib", "scipy", "spiceypy", "sympy", "pygsl")
 _missing_dependencies = []
 
 for _dependency in _hard_dependencies:

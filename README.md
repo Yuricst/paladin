@@ -3,8 +3,24 @@
 [![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)
 
 <p align="center">
-  <img src="./assets/paladin_sd.jpg" width="400" title="Paladin chuuni">
+  <img src="./assets/paladin_sd.jpg" width="300" title="Paladin chuuni">
 </p>
+
+![](https://github.com/Yuricst/paladin/blob/main/assets/paladin_sd.jpg)
+
+## Installation
+
+To install via pip
+
+```bash
+pip install spacecraft-paladin
+```
+
+To uninstall
+
+```bash
+pip uninstall spacecraft-paladin
+```
 
 
 ## Overview
@@ -19,7 +35,7 @@ Optimization is conducted by constructing problems as [`pygmo` udp's](https://es
 
 ## Dependencies
 
-Developed on python 3.10.
+Developed on python 3.10/3.11.
 
 Package requirements: 
 - `numpy`, `matplotlib`, `numba`, `scipy`, `spiceypy`, `sympy`
@@ -43,16 +59,10 @@ Users are responsible for downloading [the generic SPICE kernels froom the NAIF 
 See [pygsl setup notes](./notes/pygsl_setup.md)
 
 
-## Installation
-
-This package is still in development. For now, please clone the repository and add to path.
-
 
 ## Capabilities
 
-#### Roadmap
-
-- [ ] GSL event capability
+- [x] GSL event capability
 - [x] Propagation in CR3BP
 - [x] Propagation in N-body problem
 - [x] Transition to full-ephemeris model

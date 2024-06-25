@@ -32,6 +32,7 @@ class PseudoODESolution:
 
 
 class GSLPropagatorNBody:
+    """Spacecraft N-body dynamics propagator object wrapping GSL's RK8PD method"""
     def __init__(
         self,
         naif_frame,
@@ -92,9 +93,15 @@ class GSLPropagatorNBody:
         return
     
     def dim2nondim(self, state):
+        """Convert dimensional state to caoninical units"""
         assert len(state) == 6, "state should be length 6"
         return np.concatenate((state[0:3]/self.lstar, state[3:6]/self.vstar))
 
+    def nondim2dim(self, state):
+        """Convert canonical state to dimensional units"""
+        assert len(state) == 6, "state should be length 6"
+        return np.concatenate((state[0:3]*self.lstar, state[3:6]*self.vstar))
+    
     def eom(self, et0, t, x):
         """Evaluate equations of motion"""
         params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
