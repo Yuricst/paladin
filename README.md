@@ -32,13 +32,14 @@ Optimization is conducted by constructing problems as [`pygmo` udp's](https://es
 
 ## Dependencies
 
-Developed on python 3.10/3.11.
+Developed for python 3.10 & 3.11.
 
 Package requirements: 
-- `numpy`, `matplotlib`, `numba`, `scipy`, `spiceypy`, `sympy`
+
+- `numpy`, `matplotlib`, `numba`, `scipy`, `spiceypy`, `sympy`, `pygsl`
 
 Optional:
-- [`pygsl`](https://github.com/pygsl/pygsl/tree/main) : recommended for high-accuracy integration; requires `gsl` to be installed.
+
 - `pygmo`, `pygmo_plugins_nonfree` : required for running trajectory construction problems
 
 
