@@ -23,6 +23,7 @@ sudo apt-get install libgsl-dev
 ## 1. Install `pygsl`
 
 ### On mac: 
+
 ```
 pip install pygsl
 ```

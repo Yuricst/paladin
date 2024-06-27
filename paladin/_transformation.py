@@ -25,7 +25,7 @@ def shift_barycenter_to_m2(states, mu):
     Applies shift_origin_x() to states with shift_x = -(1-mu)
     
     Args:
-        states (array): states centered at CR3BP barycenter, dimension (6, N)
+        states (np.array): states centered at CR3BP barycenter, dimension (6, N)
         mu (float): CR3BP mu
 
     Returns:
@@ -39,8 +39,8 @@ def apply_frame_transformation(epochs, states, frame0, frame1):
     Transformation matrix is constructed with spice.sxform()
     
     Args:
-        epochs (array): epochs in ephemeris seconds, length N
-        states (array): states in frame0, dimension (6, N)
+        epochs (np.array): epochs in ephemeris seconds, length N
+        states (np.array): states in frame0, dimension (6, N)
         frame0 (str): NAIF name of current frame
         frame1 (str): NAIF name of target frame
 
