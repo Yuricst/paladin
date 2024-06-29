@@ -51,10 +51,14 @@ from ._newtonraphson import (
 from ._symbolic_jacobians import get_jaocbian_expr_Nbody, get_jaocbian_expr_Nbody_srp_j2
 
 # propagation
+from ._perturbations import third_body_battin
 from ._eom_scipy_cr3bp import eom_cr3bp
 from ._eom_scipy_nbody import third_body_battin, eom_nbody
+from ._eom_mee import mee2rv, eom_mee
+
 from ._propagator_scipy_cr3bp import PropagatorCR3BP
 from ._propagator_scipy_nbody import PropagatorNBody
+from ._propagator_gsl_mee import GSLPropagatorMEE
 from ._wrap_propagator import PropagatorWrapper
 
 try:

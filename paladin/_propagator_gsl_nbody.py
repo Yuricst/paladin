@@ -15,20 +15,8 @@ from ._symbolic_jacobians import get_jaocbian_expr_Nbody
 from ._eom_scipy_nbody import eom_nbody, eomstm_nbody
 from ._plotter import set_equal_axis
 from ._gsl_event import gsl_event_rootfind
-
-
-class PseudoODESolution:
-    """Class for storing time and states in a format similar to ODE solution from solve_ivp.
-    This is purely for interoperability with EKF.
-    """
-    def __init__(self, ts, y, t_events=None, y_events=None):
-        assert len(ts) == y.shape[1],\
-            f"y should be nx-by-N (y.shape = {y.shape}), where N is time-steps (len(ts) = {len(ts)})"
-        self.t = ts 
-        self.y = y
-        self.t_events = t_events
-        self.y_events = y_events
-        return 
+from ._ODESolution import PseudoODESolution
+from ._propagate_gsl import propagate_gsl
 
 
 class GSLPropagatorNBody:
@@ -108,6 +96,7 @@ class GSLPropagatorNBody:
         params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
         return eom_nbody(t, x, params)
     
+
     def solve(
         self,
         et0,
@@ -143,98 +132,24 @@ class GSLPropagatorNBody:
 
         # initialize integrator
         params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
-        stepper = odeiv.step_rk8pd
-        dimension = len(x0)
-        step = stepper(dimension, eom_nbody, args = params)
-        control = odeiv.control_y_new(step, eps_abs, eps_rel)
-        evolve  = odeiv.evolve(step, control, dimension)
-
-        # apply solve
-        y = copy.deepcopy(x0)
-        h = abs(hstart) * np.sign(t_span[1] - t_span[0])
-
-        # event check array
-        if events is not None:
-            # initialize event signs
-            prev_checks = np.array([event(et0,0,x0) for event in events])
-            self.detection_success = False    # initialize detection flag
-
-        if t_eval is None:
-            ts = [t_span[0],]       # initialize
-            ys = [x0,]              # initialize
-            t = t_span[0]
-            t1 = t_span[1]
-            for i in range(max_iter):
-                if abs(t) >= abs(t1):
-                    break
-                t, h, y = evolve.apply(t, t1, h, y)
-                if events is not None:
-                    detected, idx_event, prev_checks = self._check_events(
-                        prev_checks = prev_checks,
-                        et0 = et0,
-                        t = t,
-                        y = y,
-                        events = events,
-                    )
-                    if detected:
-                        t_event, y_event, self.detection_success = gsl_event_rootfind(
-                            evolve = evolve,
-                            event = events[idx_event],
-                            et0 = et0,
-                            t_bounds = [ts[-1], t],
-                            y_bounds = [ys[-1], y],
-                            tol = tol_event,
-                            maxiter = maxiter_event,
-                        )
-                        ts.append(t_event)
-                        ys.append(y_event)
-                        break
-                ts.append(t)
-                ys.append(y)
-
-        else:
-            detected = False        # initialize
-            ts = [t_eval[0],]       # initialize
-            ys = [x0,]              # initialize
-            for i_leg in range(len(t_eval)-1):
-                t = t_eval[i_leg]
-                t1 = t_eval[i_leg+1]
-                for _ in range(max_iter):
-                    if abs(t) >= abs(t1):
-                        break
-                    t, h, y = evolve.apply(t, t1, h, y)
-                    if events is not None:
-                        detected, idx_event, prev_checks = self._check_events(
-                            prev_checks = prev_checks,
-                            et0 = et0,
-                            t = t,
-                            y = y,
-                            events = events,
-                        )
-                        if detected:
-                            t_event, y_event, self.detection_success = gsl_event_rootfind(
-                                evolve = evolve,
-                                event = events[idx_event],
-                                et0 = et0,
-                                t_bounds = [ts[-1], t],
-                                y_bounds = [ys[-1], y],
-                                tol = tol_event,
-                                maxiter = maxiter_event,
-                            )
-                            ts.append(t_event)
-                            ys.append(y_event)
-                            break
-                # check if event has been detected
-                if detected:
-                    break
-                ts.append(t)
-                ys.append(y)
-
-        # post-processing
-        ts = np.array(ts)
-        ys = np.array(ys).T
+    
+        # run propagation
+        ts, ys, self.detection_success = propagate_gsl(
+            params,
+            eom_nbody,
+            et0, t_span, x0, 
+            t_eval = t_eval,
+            eps_abs = eps_abs,
+            eps_rel = eps_rel,
+            hstart = hstart,
+            max_iter = max_iter,
+            events = events,
+            tol_event = tol_event,
+            maxiter_event = maxiter_event,
+        )
         return PseudoODESolution(ts, ys)
     
+
     def solve_stm(
         self,
         et0,
@@ -278,96 +193,22 @@ class GSLPropagatorNBody:
         # initialize integrator
         params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, 
                   self.naif_frame, self.jac_func]
-        stepper = odeiv.step_rk8pd
-        dimension = 42
-        step = stepper(dimension, eomstm_nbody, args = params)
-        control = odeiv.control_y_new(step, eps_abs, eps_rel)
-        evolve  = odeiv.evolve(step, control, dimension)
+        x0_aug = np.concatenate((x0, stm0.flatten()))   # augmented state
 
-        # apply solve
-        y = np.concatenate((x0, stm0.flatten()))
-        h = abs(hstart) * np.sign(t_span[1] - t_span[0])
-
-        # event check array
-        if events is not None:
-            # initialize event signs
-            prev_checks = np.array([event(et0,0,x0) for event in events])
-            self.detection_success = False    # initialize detection flag
-            
-        if t_eval is None:
-            ts = [t_span[0],]                                    # initialize
-            ys = [np.concatenate((x0, stm0.flatten())),]         # initialize
-            t = t_span[0]
-            t1 = t_span[1]
-            for i in range(max_iter):
-                if abs(t) >= abs(t1):
-                    break
-                t, h, y = evolve.apply(t, t1, h, y)
-                if events is not None:
-                    detected, idx_event, prev_checks = self._check_events(
-                        prev_checks = prev_checks,
-                        et0 = et0,
-                        t = t,
-                        y = y,
-                        events = events,
-                    )
-                    if detected:
-                        t_event, y_event, self.detection_success = gsl_event_rootfind(
-                            evolve = evolve,
-                            event = events[idx_event],
-                            et0 = et0,
-                            t_bounds = [ts[-1], t],
-                            y_bounds = [ys[-1], y],
-                            tol = tol_event,
-                            maxiter = maxiter_event,
-                        )
-                        ts.append(t_event)
-                        ys.append(y_event)
-                        break
-                ts.append(t)
-                ys.append(y)
-
-        else:
-            detected = False        # initialize
-            ts = [t_eval[0],]                               # initialize
-            ys = [np.concatenate((x0, stm0.flatten())),]    # initialize
-            for i_leg in range(len(t_eval)-1):
-                t = t_eval[i_leg]
-                t1 = t_eval[i_leg+1]
-                for _ in range(max_iter):
-                    if abs(t) >= abs(t1):
-                        break
-                    t, h, y = evolve.apply(t, t1, h, y)
-                    if events is not None:
-                        detected, idx_event, prev_checks = self._check_events(
-                            prev_checks = prev_checks,
-                            et0 = et0,
-                            t = t,
-                            y = y,
-                            events = events,
-                        )
-                        if detected:
-                            t_event, y_event, self.detection_success = gsl_event_rootfind(
-                                evolve = evolve,
-                                event = events[idx_event],
-                                et0 = et0,
-                                t_bounds = [ts[-1], t],
-                                y_bounds = [ys[-1], y],
-                                tol = tol_event,
-                                maxiter = maxiter_event,
-                            )
-                            ts.append(t_event)
-                            ys.append(y_event)
-                            break
-                # check if event has been detected
-                if detected:
-                    break
-                ts.append(t)
-                ys.append(y)
-
-        # post-processing
-        ts = np.array(ts)
-        ys = np.array(ys).T
+        # run propagation
+        ts, ys, self.detection_success = propagate_gsl(
+            params,
+            eomstm_nbody,
+            et0, t_span, x0_aug, 
+            t_eval = t_eval,
+            eps_abs = eps_abs,
+            eps_rel = eps_rel,
+            hstart = hstart,
+            max_iter = max_iter,
+            events = events,
+            tol_event = tol_event,
+            maxiter_event = maxiter_event,
+        )
         return PseudoODESolution(ts, ys)
     
     
@@ -379,6 +220,7 @@ class GSLPropagatorNBody:
             detected_indices = np.argwhere(checks<0)[0]
             return True, detected_indices[0], curr_checks
         return False, None, curr_checks
+    
             
     def get_xdot(self, et0, t, x):
         """Get state-derivative
