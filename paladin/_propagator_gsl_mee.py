@@ -73,6 +73,16 @@ class GSLPropagatorMEE:
         # eoms
         self.rhs = eom_mee
         self.rhs_stm = None
+
+        # initialize parameters
+        self.params = [self.mus_use,
+                       self.naif_ids,
+                       0.0,
+                       self.lstar,
+                       self.tstar, 
+                       self.naif_frame,
+                       self.AU,
+                       self.k_srp]
         return
     
     def summary(self):
@@ -132,20 +142,12 @@ class GSLPropagatorMEE:
             (bunch object): solution object with properties `t` and `y`
         """
         assert len(x0) == 6, "Initial state should be length 6!"
-
-        # initialize integrator
-        params = [self.mus_use,
-                  self.naif_ids,
-                  et0,
-                  self.lstar,
-                  self.tstar, 
-                  self.naif_frame,
-                  self.AU,
-                  self.k_srp]
     
         # run propagation
+        _params = copy.deepcopy(self.params)
+        _params[2] = et0
         ts, ys, self.detection_success = propagate_gsl(
-            params,
+            _params,
             self.rhs,
             et0,
             t_span,

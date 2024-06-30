@@ -77,8 +77,27 @@ class GSLPropagatorNBody:
             self.use_srp = False
             self.rhs = eom_nbody
             self.rhs_stm = eomstm_nbody
+            self.params = [self.mus_use,
+                           self.naif_ids,
+                           0.0,
+                           self.lstar,
+                           self.tstar,
+                           self.naif_frame]
+            self.params_stm = self.params + [self.jac_func,]
         else:
             self.use_srp = True
+            self.rhs = eom_nbody
+            self.rhs_stm = eomstm_nbody
+            self.params = [self.mus_use,
+                           self.naif_ids,
+                           0.0,
+                           self.lstar,
+                           self.tstar, 
+                           self.naif_frame,
+                           self.AU,
+                           self.k_srp,
+                           self.jac_func]
+            self.params_stm = self.params + [self.jac_func,]
             raise NotImplementedError
         return
     
@@ -108,23 +127,9 @@ class GSLPropagatorNBody:
     
     def eom(self, et0, t, x):
         """Evaluate equations of motion"""
-        if self.use_srp is False:
-            params = [self.mus_use,
-                      self.naif_ids,
-                      et0,
-                      self.lstar,
-                      self.tstar,
-                      self.naif_frame]
-        else:
-            params = [self.mus_use,
-                      self.naif_ids,
-                      et0,
-                      self.lstar,
-                      self.tstar, 
-                      self.naif_frame,
-                      self.AU,
-                      self.k_srp]
-        return self.rhs(t, x, params)
+        _params = copy.deepcopy(self.params)
+        _params[2] = et0
+        return self.rhs(t, x, _params)
     
     def solve(
         self,
@@ -160,26 +165,12 @@ class GSLPropagatorNBody:
         assert len(x0) == 6, "Initial state should be length 6!"
 
         # initialize integrator
-        if self.use_srp is False:
-            params = [self.mus_use,
-                      self.naif_ids,
-                      et0,
-                      self.lstar,
-                      self.tstar,
-                      self.naif_frame]
-        else:
-            params = [self.mus_use,
-                      self.naif_ids,
-                      et0,
-                      self.lstar,
-                      self.tstar, 
-                      self.naif_frame,
-                      self.AU,
-                      self.k_srp]
+        _params = copy.deepcopy(self.params)
+        _params[2] = et0
             
         # run propagation
         ts, ys, self.detection_success = propagate_gsl(
-            params,
+            _params,
             self.rhs,
             et0, t_span, x0, 
             t_eval = t_eval,
@@ -235,29 +226,13 @@ class GSLPropagatorNBody:
             assert stm0.shape == (6,6), "STM should be 6x6 matrix"
 
         # initialize integrator
-        if self.use_srp is False:
-            params = [self.mus_use,
-                      self.naif_ids,
-                      et0,
-                      self.lstar,
-                      self.tstar,
-                      self.naif_frame,
-                      self.jac_func]
-        else:
-            params = [self.mus_use,
-                      self.naif_ids,
-                      et0,
-                      self.lstar,
-                      self.tstar, 
-                      self.naif_frame,
-                      self.AU,
-                      self.k_srp,
-                      self.jac_func]
+        _params = copy.deepcopy(self.params_stm)
+        _params[2] = et0
         x0_aug = np.concatenate((x0, stm0.flatten()))   # augmented state
 
         # run propagation
         ts, ys, self.detection_success = propagate_gsl(
-            params,
+            _params,
             self.rhs_stm,
             et0, t_span, x0_aug, 
             t_eval = t_eval,
@@ -281,31 +256,3 @@ class GSLPropagatorNBody:
             return True, detected_indices[0], curr_checks
         return False, None, curr_checks
     
-            
-    # def get_xdot(self, et0, t, x):
-    #     """Get state-derivative
-        
-    #     Args:
-    #         t (float): time
-    #         x (np.array): state-vector
-        
-    #     Returns:
-    #         (np.array): state-derivative
-    #     """
-    #     if self.use_srp is False:
-    #         params = [self.mus_use,
-    #                   self.naif_ids,
-    #                   et0,
-    #                   self.lstar,
-    #                   self.tstar,
-    #                   self.naif_frame]
-    #     else:
-    #         params = [self.mus_use,
-    #                   self.naif_ids,
-    #                   et0,
-    #                   self.lstar,
-    #                   self.tstar, 
-    #                   self.naif_frame,
-    #                   self.AU,
-    #                   self.k_srp]
-    #     return self.rhs(t, x, params)
