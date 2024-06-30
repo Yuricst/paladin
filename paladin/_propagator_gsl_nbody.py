@@ -28,8 +28,11 @@ class GSLPropagatorNBody:
     Args:
         naif_frame (str): SPICE frame name
         naif_ids (list): SPICE NAIF IDs of gravitational bodies to account for
-        mus (list): GMs of gravitational bodies to account for, in km^3/s^2
-        lstar (float): length scale for canonical units, in km
+        mus (list): GMs of gravitational bodies to account for, in [km^3/s^2]
+        lstar (float): length scale for canonical units, in [km]
+        P_srp (float): SRP pressure at 1 AU, in [N/m^2] = [kg/(m.s^2)]
+        B_srp (float): SRP reflection coefficient Cr * A/m, in [m^2/kg]
+        AU_km (float): Astronomical unit in [km]
         use_canonical (bool): whether to use canonical units
     """
     def __init__(
@@ -38,7 +41,10 @@ class GSLPropagatorNBody:
         naif_ids,
         mus,
         lstar = 3000.0,
-        use_canonical=False,
+        P_srp = 4.56e-6,               # N/m^2
+        B_srp = 0.0,                   # Cr * A/m
+        AU_km = 149.597870700e6,
+        use_canonical = False,
         analytical_jacobian = True,
     ):
         """Initialize propagator"""
@@ -54,6 +60,10 @@ class GSLPropagatorNBody:
         else:
             self.mus_use = self.mus
             self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
+
+        # parameters for SRP
+        self.AU = AU_km / lstar
+        self.k_srp = (P_srp * B_srp)/1e3 / (self.lstar/self.tstar**2)
         
         # analytical jacobian 
         self.analytical_jacobian = analytical_jacobian
@@ -63,8 +73,13 @@ class GSLPropagatorNBody:
             self.jac_func = None
 
         # eoms
-        self.rhs = eom_nbody
-        self.rhs_stm = eomstm_nbody
+        if B_srp == 0.0:
+            self.use_srp = False
+            self.rhs = eom_nbody
+            self.rhs_stm = eomstm_nbody
+        else:
+            self.use_srp = True
+            raise NotImplementedError
         return
     
     def summary(self):
@@ -93,10 +108,24 @@ class GSLPropagatorNBody:
     
     def eom(self, et0, t, x):
         """Evaluate equations of motion"""
-        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
-        return eom_nbody(t, x, params)
+        if self.use_srp is False:
+            params = [self.mus_use,
+                      self.naif_ids,
+                      et0,
+                      self.lstar,
+                      self.tstar,
+                      self.naif_frame]
+        else:
+            params = [self.mus_use,
+                      self.naif_ids,
+                      et0,
+                      self.lstar,
+                      self.tstar, 
+                      self.naif_frame,
+                      self.AU,
+                      self.k_srp]
+        return self.rhs(t, x, params)
     
-
     def solve(
         self,
         et0,
@@ -131,12 +160,27 @@ class GSLPropagatorNBody:
         assert len(x0) == 6, "Initial state should be length 6!"
 
         # initialize integrator
-        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
-    
+        if self.use_srp is False:
+            params = [self.mus_use,
+                      self.naif_ids,
+                      et0,
+                      self.lstar,
+                      self.tstar,
+                      self.naif_frame]
+        else:
+            params = [self.mus_use,
+                      self.naif_ids,
+                      et0,
+                      self.lstar,
+                      self.tstar, 
+                      self.naif_frame,
+                      self.AU,
+                      self.k_srp]
+            
         # run propagation
         ts, ys, self.detection_success = propagate_gsl(
             params,
-            eom_nbody,
+            self.rhs,
             et0, t_span, x0, 
             t_eval = t_eval,
             eps_abs = eps_abs,
@@ -191,14 +235,30 @@ class GSLPropagatorNBody:
             assert stm0.shape == (6,6), "STM should be 6x6 matrix"
 
         # initialize integrator
-        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, 
-                  self.naif_frame, self.jac_func]
+        if self.use_srp is False:
+            params = [self.mus_use,
+                      self.naif_ids,
+                      et0,
+                      self.lstar,
+                      self.tstar,
+                      self.naif_frame,
+                      self.jac_func]
+        else:
+            params = [self.mus_use,
+                      self.naif_ids,
+                      et0,
+                      self.lstar,
+                      self.tstar, 
+                      self.naif_frame,
+                      self.AU,
+                      self.k_srp,
+                      self.jac_func]
         x0_aug = np.concatenate((x0, stm0.flatten()))   # augmented state
 
         # run propagation
         ts, ys, self.detection_success = propagate_gsl(
             params,
-            eomstm_nbody,
+            self.rhs_stm,
             et0, t_span, x0_aug, 
             t_eval = t_eval,
             eps_abs = eps_abs,
@@ -222,16 +282,30 @@ class GSLPropagatorNBody:
         return False, None, curr_checks
     
             
-    def get_xdot(self, et0, t, x):
-        """Get state-derivative
+    # def get_xdot(self, et0, t, x):
+    #     """Get state-derivative
         
-        Args:
-            t (float): time
-            x (np.array): state-vector
+    #     Args:
+    #         t (float): time
+    #         x (np.array): state-vector
         
-        Returns:
-            (np.array): state-derivative
-        """
-        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, 
-                  self.naif_frame, self.jac_func]
-        return self.rhs(t, x, params)
+    #     Returns:
+    #         (np.array): state-derivative
+    #     """
+    #     if self.use_srp is False:
+    #         params = [self.mus_use,
+    #                   self.naif_ids,
+    #                   et0,
+    #                   self.lstar,
+    #                   self.tstar,
+    #                   self.naif_frame]
+    #     else:
+    #         params = [self.mus_use,
+    #                   self.naif_ids,
+    #                   et0,
+    #                   self.lstar,
+    #                   self.tstar, 
+    #                   self.naif_frame,
+    #                   self.AU,
+    #                   self.k_srp]
+    #     return self.rhs(t, x, params)

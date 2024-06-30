@@ -26,10 +26,10 @@ class GSLPropagatorMEE:
         naif_frame (str): SPICE frame name
         naif_ids (list): SPICE IDs of bodies
         mus (list): GMs of bodies
-        lstar (float): canonical length unit
+        lstar (float): canonical length unit, in [km]
         P_srp (float): SRP pressure at 1 AU, in [N/m^2] = [kg/(m.s^2)]
         B_srp (float): SRP reflection coefficient Cr * A/m, in [m^2/kg]
-        AU_km (float): Astronomical unit in km
+        AU_km (float): Astronomical unit in [km]
         use_canonical (bool): use canonical units
         analytical_jacobian (bool): use analytical jacobian
     """
@@ -42,7 +42,7 @@ class GSLPropagatorMEE:
         P_srp = 4.56e-6,               # N/m^2
         B_srp = 0.0,                   # Cr * A/m
         AU_km = 149.597870700e6,
-        use_canonical=False,
+        use_canonical = False,
         analytical_jacobian = True,
     ):
         """Initialize propagator"""
@@ -99,7 +99,6 @@ class GSLPropagatorMEE:
         """Convert canonical state to dimensional units"""
         assert len(state) == 6, "state should be length 6"
         return np.concatenate(([state[0]*self.lstar,], state[1:]))
-    
 
     def solve(
         self,
@@ -147,7 +146,7 @@ class GSLPropagatorMEE:
         # run propagation
         ts, ys, self.detection_success = propagate_gsl(
             params,
-            eom_mee,
+            self.rhs,
             et0,
             t_span,
             x0,
