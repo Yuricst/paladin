@@ -14,7 +14,7 @@ def mee2rv(mee, mu):
     """Convert MEE to r and v vectors
     
     Args:
-        mee (np.array): MEE vector
+        mee (np.array): MEE vector [p,f,g,h,k,L]
         mu (float): GM of primary body
 
     Returns:
@@ -31,8 +31,8 @@ def mee2rv(mee, mu):
     r  = p / w
 
     # convert MEE to pos_vec and vel_vec
-    basis1 = np.array([1 - k^2 + h^2, 2 * h * k, -2 * k]) / s2
-    basis2 = np.array([2 * h * k, 1 + k^2 - h^2, 2 * h]) / s2
+    basis1 = np.array([1 - k**2 + h**2, 2 * h * k, -2 * k]) / s2
+    basis2 = np.array([2 * h * k, 1 + k**2 - h**2, 2 * h]) / s2
     X = r * cL
     Y = r * sL
     A = np.sqrt(mu / p)
@@ -75,8 +75,8 @@ def eom_mee(t,states,params):
     D = np.array([0,0,0,0,0,np.sqrt(mu*p)*(w/p)**2])
 
     # convert MEE to pos_vec and vel_vec
-    basis1 = np.array([1 - k^2 + h^2, 2 * h * k, -2 * k]) / s2
-    basis2 = np.array([2 * h * k, 1 + k^2 - h^2, 2 * h]) / s2
+    basis1 = np.array([1 - k**2 + h**2, 2 * h * k, -2 * k]) / s2
+    basis2 = np.array([2 * h * k, 1 + k**2 - h**2, 2 * h]) / s2
     X = r * cL
     Y = r * sL
     A = np.sqrt(mu / p)
@@ -102,7 +102,7 @@ def eom_mee(t,states,params):
             naif_frame, "NONE", naif_ids[0]
         )
         accel3 = third_body_battin(
-            states[0:3], rvec3/lstar, mus[idx+1]
+            pos_vec, rvec3/lstar, mus[idx+1]
         )
         # Add to accelerations
         ptrb += T_Inr2RTN @ accel3
