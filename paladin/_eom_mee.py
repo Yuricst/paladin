@@ -6,7 +6,7 @@ import numpy as np
 import spiceypy as spice
 from numba import njit
 
-from ._perturbations import third_body_battin
+from ._perturbations import third_body_battin, solar_radiation_pressure
 
 
 @njit
@@ -101,7 +101,7 @@ def eom_mee(t,states,params):
         (np.array): time derivative of MEE state vector
     """
     # unpack parameters
-    mus, naif_ids, et0, lstar, tstar, naif_frame = params
+    mus, naif_ids, et0, lstar, tstar, naif_frame, AU, k_srp = params
 
     # inner calculations
     pos_vec, B, D, T_Inr2RTN = _eom_mee(states, mu = mus[0])
@@ -111,15 +111,15 @@ def eom_mee(t,states,params):
 
     # third-body perturbations
     for idx in range(len(mus)-1):
-        rvec3, _ = spice.spkpos(
-            naif_ids[idx+1], et0 + t*tstar, 
-            naif_frame, "NONE", naif_ids[0]
-        )
-        accel3 = third_body_battin(
-            pos_vec, rvec3/lstar, mus[idx+1]
-        )
+        rvec3, _ = spice.spkpos(naif_ids[idx+1], et0 + t*tstar, naif_frame, "NONE", naif_ids[0])
+        accel3 = third_body_battin(pos_vec, rvec3/lstar, mus[idx+1])
         # Add to accelerations
         ptrb += T_Inr2RTN @ accel3
+    
+    # append SRP
+    r_sun, _ = spice.spkpos("SUN", et0 + t*tstar, naif_frame, "NONE", naif_ids[0])
+    s_sc2sun = r_sun - pos_vec
+    ptrb += solar_radiation_pressure(s_sc2sun, AU, k_srp)
 
     # state derivatives
     dstates = np.dot(B, ptrb) + D

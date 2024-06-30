@@ -20,13 +20,28 @@ from ._propagate_gsl import propagate_gsl
 
 
 class GSLPropagatorMEE:
-    """Spacecraft MEE propagator object"""
+    """Spacecraft MEE propagator object
+    
+    Args:
+        naif_frame (str): SPICE frame name
+        naif_ids (list): SPICE IDs of bodies
+        mus (list): GMs of bodies
+        lstar (float): canonical length unit
+        P_srp (float): SRP pressure at 1 AU, in [N/m^2] = [kg/(m.s^2)]
+        B_srp (float): SRP reflection coefficient Cr * A/m, in [m^2/kg]
+        AU_km (float): Astronomical unit in km
+        use_canonical (bool): use canonical units
+        analytical_jacobian (bool): use analytical jacobian
+    """
     def __init__(
         self,
         naif_frame,
         naif_ids,
         mus,
         lstar = 3000.0,
+        P_srp = 4.56e-6,               # N/m^2
+        B_srp = 0.0,                   # Cr * A/m
+        AU_km = 149.597870700e6,
         use_canonical=False,
         analytical_jacobian = True,
     ):
@@ -43,7 +58,11 @@ class GSLPropagatorMEE:
         else:
             self.mus_use = self.mus
             self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
-        
+
+        # parameters for SRP
+        self.AU = AU_km / lstar
+        self.k_srp = (P_srp * B_srp)/1e3 / (self.lstar/self.tstar**2)
+
         # analytical jacobian 
         self.analytical_jacobian = analytical_jacobian
         if self.analytical_jacobian:
@@ -58,16 +77,17 @@ class GSLPropagatorMEE:
     
     def summary(self):
         """Print info about integrator"""
-        print(f" ******* MEE GSL propagator summary ******* ")
-        print(f" |   NAIF frame      : {self.naif_frame}")
-        print(f" |   NAIF IDs        : {self.naif_ids}")
-        print(f" |   GMs             : {self.mus}")
-        print(f" |   Canonical units : {self.use_canonical}")
-        print(f" |   lstar           : {self.lstar}")
-        print(f" |   tstar           : {self.tstar}")
-        print(f" |   vstar           : {self.vstar}")
-        print(f" |   Jacobian        : {self.analytical_jacobian}")
-        print(f" ----------------------------------------- ")
+        print(f" ********* MEE GSL propagator summary ********* ")
+        print(f" |   NAIF frame            : {self.naif_frame}")
+        print(f" |   NAIF IDs              : {self.naif_ids}")
+        print(f" |   GMs                   : {self.mus}")
+        print(f" |   SRP magnitude at 1 AU : {self.k_srp}")
+        print(f" |   Canonical units       : {self.use_canonical}")
+        print(f" |   lstar                 : {self.lstar}")
+        print(f" |   tstar                 : {self.tstar}")
+        print(f" |   vstar                 : {self.vstar}")
+        print(f" |   Jacobian              : {self.analytical_jacobian}")
+        print(f" --------------------------------------------- ")
         return
     
     def dim2nondim(self, state):
@@ -115,13 +135,22 @@ class GSLPropagatorMEE:
         assert len(x0) == 6, "Initial state should be length 6!"
 
         # initialize integrator
-        params = [self.mus_use, self.naif_ids, et0, self.lstar, self.tstar, self.naif_frame]
+        params = [self.mus_use,
+                  self.naif_ids,
+                  et0,
+                  self.lstar,
+                  self.tstar, 
+                  self.naif_frame,
+                  self.AU,
+                  self.k_srp]
     
         # run propagation
         ts, ys, self.detection_success = propagate_gsl(
             params,
             eom_mee,
-            et0, t_span, x0, 
+            et0,
+            t_span,
+            x0,
             t_eval = t_eval,
             eps_abs = eps_abs,
             eps_rel = eps_rel,
