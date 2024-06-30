@@ -1,4 +1,4 @@
-# Example on propagation
+# Example propagation of Cartesian state
 
 We consider an example propagating the initial NRHO state in Moon-centered inertial frame.
 
@@ -100,3 +100,8 @@ axs1[2].set(xlabel="Epoch", ylabel="z error, km")
 plt.tight_layout()
 plt.show()
 ```
+
+.. image:: ../../plots/propagation_example_nrho.png
+   :width: 400
+   :align: center
+   :alt: 3D NRHO trajectory

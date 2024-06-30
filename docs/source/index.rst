@@ -19,7 +19,7 @@ The propagation is done with GSL under the hood.
    :caption: Contents:
 
    start
-   example_propagate
+   example_propagate_cart
    api
 
 Indices and tables
