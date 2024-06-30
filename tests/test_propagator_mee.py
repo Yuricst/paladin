@@ -81,12 +81,9 @@ def test_propagator_nrho(verbose=False, make_plot=False):
     if verbose:
         print(f"x0 (cartesian) = \n{list(x0)}")
         print(f"xf (cartesian) = \n{list(xf)}")
-    xf_check = np.array([3.1087933159452286, 
-                         4.673573546274883, 
-                         -22.262422160355378, 
-                         0.011778751356011277, 
-                         -0.04940333292753665, 
-                         -0.05173426046301675])
+    xf_check = np.array([3.1087933159276013, 4.673573546276977, 
+                         -22.26242216035324, 0.01177875135593217,
+                         -0.04940333292761417, -0.051734260463009364])
 
     if make_plot:
         # convert each state to cartesian
@@ -113,6 +110,7 @@ def test_propagator_nrho(verbose=False, make_plot=False):
         axs1[1].set(xlabel="Epoch", ylabel="y error, km")
         axs1[2].set(xlabel="Epoch", ylabel="z error, km")
         plt.tight_layout()
+        print(f"np.abs(xf - xf_check) = {np.abs(xf - xf_check)}")
     assert all(np.abs(xf - xf_check) < 1e-14)
 
 

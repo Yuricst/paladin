@@ -1,5 +1,5 @@
 """
-Benchmark pygsl nbody integrator
+Benchmark pygsl MEE integrator
 Baseline from: https://naif.jpl.nasa.gov/pub/naif/misc/MORE_PROJECTS/DSG/
 """
 
@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import time
 from tqdm.auto import tqdm
+import pykep as pk
 
 import sys 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
@@ -30,7 +31,7 @@ spice.furnsh(os.path.join(
 ))  # baseline NRHO
 
 
-def benchmark_pygsl_nbody(verbose=False, make_plot=False):
+def benchmark_pygsl_mee(verbose=False, make_plot=False):
     # set epochs
     et0 = spice.utc2et("2025-01-01T08:09:36")
     tf_day = 30.0
@@ -55,7 +56,7 @@ def benchmark_pygsl_nbody(verbose=False, make_plot=False):
     # create NRHO propagator
     naif_ids = ["301", "399", "10"]
     mus = [spice.bodvrd(ID, "GM", 1)[1][0] for ID in naif_ids]
-    prop_nbody = paladin.GSLPropagatorNBody(
+    prop_nbody = paladin.GSLPropagatorMEE(
         naif_frame,
         naif_ids,
         mus,
@@ -66,30 +67,26 @@ def benchmark_pygsl_nbody(verbose=False, make_plot=False):
         prop_nbody.summary()
 
     # solve IVP
-    x0 = prop_nbody.dim2nondim(sv_baseline[0,:])
+    x0 = np.concatenate((sv_baseline[0,0:3]/prop_nbody.lstar, sv_baseline[0,3:6]/prop_nbody.vstar))
+    mee0 = pk.ic2eq(r = x0[0:3], v = x0[3:6], mu = 1.0)
     tf_nondim = tf/prop_nbody.tstar
-
-    print(f"et0 = {et0}")
-    print(f"x0 = {list(x0)}")
 
     def run_solve():
         prop_nbody.solve(
             et0,
             [0, tf_nondim],
-            x0,
+            mee0,
         )
     
-    def run_solve_stm():
-        prop_nbody.solve_stm(
-            et0,
-            [0, tf_nondim],
-            x0,
-        )
+    # def run_solve_stm():
+    #     prop_nbody.solve_stm(
+    #         et0,
+    #         [0, tf_nondim],
+    #         mee0,
+    #     )
 
-    
     # run once to jit-compile
     run_solve()
-    run_solve_stm()
 
     # test solve
     N = 5
@@ -103,21 +100,21 @@ def benchmark_pygsl_nbody(verbose=False, make_plot=False):
     if N > 1:
         print(f"    std dev. time   : {np.std(run_times):.4f} s")
 
-    # test solve
-    N = 1
-    run_times = []
-    for _ in tqdm(range(N), desc='testing solve_stm()'):
-        tstart = time.time()
-        run_solve_stm()
-        run_times.append(time.time() - tstart)
-    print(f"pygsl solve_stm over {tf_day:1.2f} days (10 run samples)")
-    print(f"    mean exec. time : {np.mean(run_times):.4f} s")
-    if N > 1:
-        print(f"    std dev. time   : {np.std(run_times):.4f} s")
+    # # test solve
+    # N = 1
+    # run_times = []
+    # for _ in tqdm(range(N), desc='testing solve_stm()'):
+    #     tstart = time.time()
+    #     run_solve_stm()
+    #     run_times.append(time.time() - tstart)
+    # print(f"pygsl solve_stm over {tf_day:1.2f} days (10 run samples)")
+    # print(f"    mean exec. time : {np.mean(run_times):.4f} s")
+    # if N > 1:
+    #     print(f"    std dev. time   : {np.std(run_times):.4f} s")
     return
     
 
 
 if __name__=="__main__":
-    benchmark_pygsl_nbody(verbose=True, make_plot=True)
+    benchmark_pygsl_mee(verbose=True, make_plot=True)
 

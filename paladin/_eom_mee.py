@@ -43,12 +43,9 @@ def mee2rv(mee, mu):
     return pos_vec, vel_vec
 
 
-def eom_mee(t,states,params):
-    """Equations of motion in terms of MEE"""
-    # unpack parameters
-    mus, naif_ids, et0, lstar, tstar, naif_frame = params
-    mu = mus[0]
-
+@njit
+def _eom_mee(states, mu):
+    """Internal calculations for MEE eom with njit decorator"""
     # unpack state
     p,f,g,h,k,L = states
 
@@ -56,11 +53,9 @@ def eom_mee(t,states,params):
     cL = np.cos(L)
     sL = np.sin(L)
     w  = 1. + f * cL + g * sL
-    wL = g*cL - f*sL
     s2 = 1. + h*h + k*k
     r  = p / w
     e  = np.sqrt(f**2 + g**2)
-    a  = p/(1-e**2)
     sqrtpmu = np.sqrt(p/mu)
 
     # Construct the matrix B in terms of MEE
@@ -86,11 +81,30 @@ def eom_mee(t,states,params):
     vel_vec = Xdot * basis1 + Ydot * basis2
 
     # transformation from inertial to RTN
-    iR = pos_vec / np.linalg.norm(pos_vec)
-    iN = np.cross(pos_vec, vel_vec)
-    iN = iN / np.linalg.norm(iN)
-    iT = np.cross(iN,iR)
-    T_Inr2RTN = np.array([iR, iT, iN])
+    T_Inr2RTN = np.zeros((3,3))
+    T_Inr2RTN[0,:] = pos_vec / np.linalg.norm(pos_vec)
+    T_Inr2RTN[2,:] = np.cross(pos_vec, vel_vec)
+    T_Inr2RTN[2,:] = T_Inr2RTN[2,:] / np.linalg.norm(T_Inr2RTN[2,:])
+    T_Inr2RTN[1,:] = np.cross(T_Inr2RTN[2,:], T_Inr2RTN[0,:])
+    return pos_vec, B, D, T_Inr2RTN
+
+
+def eom_mee(t,states,params):
+    """Equations of motion in terms of MEE
+    
+    Args:
+        t (float): time
+        states (np.array): MEE state vector
+        params (list): parameters for the EOM
+
+    Returns:
+        (np.array): time derivative of MEE state vector
+    """
+    # unpack parameters
+    mus, naif_ids, et0, lstar, tstar, naif_frame = params
+
+    # inner calculations
+    pos_vec, B, D, T_Inr2RTN = _eom_mee(states, mu = mus[0])
                         
     # initialize perturbations
     ptrb = np.zeros(3,)
