@@ -39,5 +39,5 @@ napoleon_google_docstring = True
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'bizstyle'
+html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
