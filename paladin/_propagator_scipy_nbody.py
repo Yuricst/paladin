@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
 from ._symbolic_jacobians import get_jaocbian_expr_Nbody
-from ._eom_scipy_nbody import eom_nbody, eomstm_nbody
+from ._eom_nbody import eom_nbody, eomstm_nbody
 from ._plotter import set_equal_axis
 
 
