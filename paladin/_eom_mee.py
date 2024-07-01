@@ -115,11 +115,11 @@ def eom_mee(t,states,params):
         accel3 = third_body_battin(pos_vec, rvec3/lstar, mus[idx+1])
         # Add to accelerations
         ptrb += T_Inr2RTN @ accel3
-    
+
     # append SRP
     r_sun, _ = spice.spkpos("SUN", et0 + t*tstar, naif_frame, "NONE", naif_ids[0])
-    s_sc2sun = r_sun - pos_vec
-    ptrb += solar_radiation_pressure(s_sc2sun, AU, k_srp)
+    r_sun2sc = pos_vec - r_sun
+    ptrb += solar_radiation_pressure(r_sun2sc, AU, k_srp)
 
     # state derivatives
     dstates = np.dot(B, ptrb) + D

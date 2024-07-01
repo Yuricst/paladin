@@ -25,15 +25,15 @@ def third_body_battin(r, s, mu_third):
     return -mu_third/dnorm**3 * (r + F*s)
 
 
-def solar_radiation_pressure(s_sc2sun, AU, k_srp):
+def solar_radiation_pressure(r_sun2sc, AU, k_srp):
     """Solar radiation pressure acceleration
     
     Args:
-        s_sc2sun (np.array): position vector of spacecraft w.r.t. Sun, in LU
+        r_sun2sc (np.array): position vector of spacecraft w.r.t. Sun, in LU
         AU (float): Astronomical unit, in LU
         k_srp (float): acceleration magnitude, LU/TU^2
 
     Returns:
         (np.array): SRP acceleration
     """
-    return k_srp * AU**2  * s_sc2sun / np.linalg.norm(s_sc2sun)**3
+    return k_srp * AU**2  * r_sun2sc / np.linalg.norm(r_sun2sc)**3
