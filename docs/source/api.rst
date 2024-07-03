@@ -35,6 +35,3 @@ Helper functions
 
 .. autofunction:: paladin.apply_frame_transformation
 
-.. autofunction:: paladin.get_jaocbian_expr_Nbody
-
-
