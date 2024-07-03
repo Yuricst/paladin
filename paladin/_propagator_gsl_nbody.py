@@ -48,6 +48,7 @@ class GSLPropagatorNBody:
         B_srp = 0.0,                   # Cr * A/m
         AU_km = 149.597870700e6,
         use_canonical = False,
+        use_srp = False,
     ):
         """Initialize propagator"""
         self.naif_frame = naif_frame
@@ -64,7 +65,8 @@ class GSLPropagatorNBody:
             self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
 
         # parameters for SRP
-        if self.use_canonical:
+        self.use_srp = use_srp
+        if self.use_srp:
             self.k_srp = (AU_km/self.lstar)**2 * (P_srp * B_srp / 1000) * (self.tstar**2/self.lstar)
         else:
             self.k_srp = AU_km**2 * (P_srp * B_srp / 1000)
@@ -95,7 +97,6 @@ class GSLPropagatorNBody:
                            self.naif_frame,
                            self.k_srp]
             self.params_stm = self.params + [self.jac_func,]
-            raise NotImplementedError
         return
     
     def summary(self):
@@ -108,6 +109,7 @@ class GSLPropagatorNBody:
         print(f" |   lstar           : {self.lstar}")
         print(f" |   tstar           : {self.tstar}")
         print(f" |   vstar           : {self.vstar}")
+        print(f" |   SRP             : {self.use_srp}")
         print(f" ----------------------------------------- ")
         return
     
