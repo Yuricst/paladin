@@ -13,6 +13,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('./../..'))
+import paladin
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -35,9 +36,6 @@ extensions = ['myst_parser',
 
 templates_path = ['_templates']
 exclude_patterns = []
-
-# Napoleon settings
-napoleon_google_docstring = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
