@@ -98,7 +98,7 @@ def test_propagator_nrho(verbose=False, make_plot=False):
             color="red", label="Propagated", linewidth=0.5)
         ax.set(xlabel="x, km", ylabel="y, km", zlabel="z, km")
         ax.legend()
-        plt.savefig("../plots/propagation_example_nrho.png", dpi=200)
+        #plt.savefig("../plots/propagation_example_nrho.png", dpi=200)
 
         # error plot
         error_pos = rvs[0:3,:]*prop_nbody.lstar - np.transpose(sv_baseline[:,0:3])
