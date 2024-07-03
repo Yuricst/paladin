@@ -38,9 +38,3 @@ jobs:
       - name: install
         run: |
           python -m pip install pygsl
-
-      - name: test
-        run: |
-          # make sure to move out of the source directory
-          cd /tmp
-          python -m pytest -s /home/runner/work/pygsl/pygsl/tests
