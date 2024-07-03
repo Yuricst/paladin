@@ -19,7 +19,7 @@ jobs:
           node-version: 20
       - name: Install dependencies  
         run: |  
-          sudo apt-get install libgsl-dev
+          sudo apt-get install libgsl-dev swig
           pip install -r requirements.txt
           pip install wheel paladin pytest coverage
       - name: Test with pytest  
