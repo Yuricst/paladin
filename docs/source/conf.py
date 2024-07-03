@@ -28,7 +28,10 @@ release = '0.1.4'
 extensions = ['myst_parser',
               'sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
-              'sphinx.ext.githubpages',]
+              'sphinx.ext.githubpages',
+              'sphinx.ext.mathjax',
+              'nbsphinx',
+              'IPython.sphinxext.ipython_console_highlighting']
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -41,3 +44,32 @@ napoleon_google_docstring = True
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
+
+
+# -- Using markdown
+source_suffix = {
+    '.rst': 'restructuredtext',
+    # '.txt': 'markdown',
+    '.md': 'markdown',
+}
+
+
+
+# Napoleon settings
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = False
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = True
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_rtype = True
+napoleon_preprocess_types = False
+napoleon_type_aliases = None
+napoleon_attr_annotations = True
+
+# mathjax settings
+mathjax_path="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
