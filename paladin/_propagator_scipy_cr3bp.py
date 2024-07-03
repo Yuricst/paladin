@@ -4,7 +4,7 @@ Propagator with scipy for CR3BP
 
 import numpy as np
 from scipy.integrate import solve_ivp
-from ._eom_cr3bp import eom_cr3bp, eom_cr3bp_stm
+from .eoms._eom_cr3bp import eom_cr3bp, eom_cr3bp_stm
 
 class PropagatorCR3BP:
     """Class for N-body propagator"""

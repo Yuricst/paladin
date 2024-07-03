@@ -6,7 +6,7 @@ import numpy as np
 import spiceypy as spice
 from numba import njit
 
-from ._perturbations import third_body_battin, solar_radiation_pressure
+from .._perturbations import third_body_battin, solar_radiation_pressure
 
 
 @njit

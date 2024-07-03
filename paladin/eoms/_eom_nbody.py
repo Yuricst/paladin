@@ -6,7 +6,7 @@ import numpy as np
 import spiceypy as spice
 from numba import njit
 
-from ._perturbations import third_body_battin
+from .._perturbations import third_body_battin
 
 
 def eom_nbody(t,states,params):

@@ -11,8 +11,7 @@ import matplotlib.pyplot as plt
 import pygsl._numobj as numx
 from pygsl import odeiv
 
-from ._symbolic_jacobians import get_jaocbian_expr_Nbody
-from ._eom_mee import eom_mee
+from .eoms._eom_mee import eom_mee
 from ._plotter import set_equal_axis
 from ._gsl_event import gsl_event_rootfind
 from ._ODESolution import PseudoODESolution
@@ -66,7 +65,7 @@ class GSLPropagatorMEE:
         # analytical jacobian 
         self.analytical_jacobian = analytical_jacobian
         if self.analytical_jacobian:
-            self.jac_func = get_jaocbian_expr_Nbody(self.mus_use)
+            self.jac_func = None #get_jaocbian_expr_Nbody(self.mus_use)
         else:
             self.jac_func = None
 

@@ -9,9 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
-from ._symbolic_jacobians import get_jaocbian_expr_Nbody
-from ._eom_nbody import eom_nbody, eomstm_nbody
+from .eoms._eom_nbody import eom_nbody, eomstm_nbody
 from ._plotter import set_equal_axis
+from .symbolic_jacobians._jac_nbody import get_jacobian_expr_nbody
+from .symbolic_jacobians._jac_nbody_srp import get_jacobian_expr_nbody_srp
 
 
 class PropagatorNBody:
@@ -52,7 +53,7 @@ class PropagatorNBody:
         # analytical jacobian 
         self.analytical_jacobian = analytical_jacobian
         if self.analytical_jacobian:
-            self.jac_func = get_jaocbian_expr_Nbody(self.mus_use)
+            self.jac_func = get_jacobian_expr_nbody(self.mus_use)
         else:
             self.jac_func = None
         return

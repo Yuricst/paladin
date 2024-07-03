@@ -48,13 +48,15 @@ from ._newtonraphson import (
 )
 
 # symbolic jacobian
-from ._symbolic_jacobians import get_jaocbian_expr_Nbody, get_jaocbian_expr_Nbody_srp_j2
+from .symbolic_jacobians._jac_nbody import get_jacobian_expr_nbody
+from .symbolic_jacobians._jac_nbody_srp import get_jacobian_expr_nbody_srp
 
 # equations of motion
 from ._perturbations import third_body_battin
-from ._eom_cr3bp import eom_cr3bp
-from ._eom_nbody import third_body_battin, eom_nbody
-from ._eom_mee import mee2rv, eom_mee
+from .eoms._eom_cr3bp import eom_cr3bp
+from .eoms._eom_nbody import third_body_battin, eom_nbody, eomstm_nbody
+from .eoms._eom_nbody_srp import eom_nbody_srp, eomstm_nbody_srp
+from .eoms._eom_mee import mee2rv, eom_mee
 
 # propagators
 from ._propagator_scipy_cr3bp import PropagatorCR3BP
@@ -62,13 +64,15 @@ from ._propagator_scipy_nbody import PropagatorNBody
 from ._propagator_gsl_mee import GSLPropagatorMEE
 from ._wrap_propagator import PropagatorWrapper
 
-try:
-    from ._propagator_gsl_nbody import GSLPropagatorNBody
-    ext_gsl = True
-except:
-    print(f"WARNING : skipping GSL-dependent functions")
-    ext_gsl = False
-    pass
+from ._propagator_gsl_nbody import GSLPropagatorNBody
+
+#try:
+#     from ._propagator_gsl_nbody import GSLPropagatorNBody
+#     ext_gsl = True
+# except:
+#     print(f"WARNING : skipping GSL-dependent functions")
+#     ext_gsl = False
+#     pass
 
 try:
     # model transition

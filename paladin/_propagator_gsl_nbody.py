@@ -11,8 +11,11 @@ import matplotlib.pyplot as plt
 import pygsl._numobj as numx
 from pygsl import odeiv
 
-from ._symbolic_jacobians import get_jaocbian_expr_Nbody
-from ._eom_nbody import eom_nbody, eomstm_nbody
+from .eoms._eom_nbody import eom_nbody, eomstm_nbody
+from .eoms._eom_nbody_srp import eom_nbody_srp, eomstm_nbody_srp
+from .symbolic_jacobians._jac_nbody import get_jacobian_expr_nbody
+from .symbolic_jacobians._jac_nbody_srp import get_jacobian_expr_nbody_srp
+
 from ._plotter import set_equal_axis
 from ._gsl_event import gsl_event_rootfind
 from ._ODESolution import PseudoODESolution
@@ -45,7 +48,6 @@ class GSLPropagatorNBody:
         B_srp = 0.0,                   # Cr * A/m
         AU_km = 149.597870700e6,
         use_canonical = False,
-        analytical_jacobian = True,
     ):
         """Initialize propagator"""
         self.naif_frame = naif_frame
@@ -62,21 +64,17 @@ class GSLPropagatorNBody:
             self.lstar, self.tstar, self.vstar = 1.0, 1.0, 1.0
 
         # parameters for SRP
-        self.AU = AU_km / lstar
-        self.k_srp = (P_srp * B_srp)/1e3 / (self.lstar/self.tstar**2)
-        
-        # analytical jacobian 
-        self.analytical_jacobian = analytical_jacobian
-        if self.analytical_jacobian:
-            self.jac_func = get_jaocbian_expr_Nbody(self.mus_use)
+        if self.use_canonical:
+            self.k_srp = (AU_km/self.lstar)**2 * (P_srp * B_srp / 1000) * (self.tstar**2/self.lstar)
         else:
-            self.jac_func = None
+            self.k_srp = AU_km**2 * (P_srp * B_srp / 1000)
 
         # eoms
         if B_srp == 0.0:
             self.use_srp = False
             self.rhs = eom_nbody
             self.rhs_stm = eomstm_nbody
+            self.jac_func = get_jacobian_expr_nbody(self.mus_use)
             self.params = [self.mus_use,
                            self.naif_ids,
                            0.0,
@@ -86,17 +84,16 @@ class GSLPropagatorNBody:
             self.params_stm = self.params + [self.jac_func,]
         else:
             self.use_srp = True
-            self.rhs = eom_nbody
-            self.rhs_stm = eomstm_nbody
+            self.rhs = eom_nbody_srp
+            self.rhs_stm = eomstm_nbody_srp
+            self.jac_func = get_jacobian_expr_nbody_srp(self.mus_use)
             self.params = [self.mus_use,
                            self.naif_ids,
                            0.0,
                            self.lstar,
                            self.tstar, 
                            self.naif_frame,
-                           self.AU,
-                           self.k_srp,
-                           self.jac_func]
+                           self.k_srp]
             self.params_stm = self.params + [self.jac_func,]
             raise NotImplementedError
         return
@@ -111,7 +108,6 @@ class GSLPropagatorNBody:
         print(f" |   lstar           : {self.lstar}")
         print(f" |   tstar           : {self.tstar}")
         print(f" |   vstar           : {self.vstar}")
-        print(f" |   Jacobian        : {self.analytical_jacobian}")
         print(f" ----------------------------------------- ")
         return
     
