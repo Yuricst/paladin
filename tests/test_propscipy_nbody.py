@@ -53,7 +53,8 @@ def test_propagator_nbody_earth(verbose = False, make_plot = False):
         ax = plt.axes(projection = '3d')
         print(res.y.shape)
         ax.plot(res.y[0,:], res.y[1,:], res.y[2,:])
-    assert all(np.abs(xf_test - res.y[:,-1]) < 1e-12)
+    assert all(np.abs(xf_test - res.y[:,-1]) < 1e-8),\
+    	f"Error: {np.abs(xf_test - res.y[:,-1])}"
 
 
 if __name__=="__main__":

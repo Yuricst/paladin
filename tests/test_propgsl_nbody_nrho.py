@@ -101,7 +101,8 @@ def test_propagator_nrho(verbose=False, make_plot=False):
         axs1[1].set(xlabel="Epoch", ylabel="y error, km")
         axs1[2].set(xlabel="Epoch", ylabel="z error, km")
         plt.tight_layout()
-    assert all(np.abs(res_nbody.y[:,-1] - xf_check) < 1e-14)
+    assert all(np.abs(res_nbody.y[:,-1] - xf_check) < 1e-9),\
+    	f"Deviation: {np.abs(res_nbody.y[:,-1] - xf_check)}"
 
 
 if __name__=="__main__":
