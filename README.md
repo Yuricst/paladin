@@ -20,6 +20,17 @@ To uninstall
 pip uninstall spacecraft-paladin
 ```
 
+## Environment setup
+
+An example virtual environment for working with this library can be initialized using [`poetry`](https://python-poetry.org/) via
+
+```bash
+poetry install
+pip install pygsl
+```
+
+Note: `pygsl` cannot be imported via `poetry` as it does not PEP 517 builds. 
+
 
 ## Overview
 
