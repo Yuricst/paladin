@@ -4,7 +4,7 @@
 | -------- | ------------- |
 | [![PyPI version](https://badge.fury.io/py/spacecraft-paladin.svg)](https://badge.fury.io/py/spacecraft-paladin)  | [![documentation workflow](https://github.com/Yuricst/paladin/actions/workflows/documentation.yml/badge.svg)](https://yuricst.github.io/paladin/)    |
 
-!! Currently only tested/working with python 3.11 !!
+!! Currently only tested/working with python 3.11 and numpy 1.X (due to restriction by pygsl) !!
 
 ## Installation
 
